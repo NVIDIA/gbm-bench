@@ -1,4 +1,6 @@
 # Source: https://github.com/miguelgfierro/codebase/blob/master/python/machine_learning/metrics.py
+# Source: https://github.com/Azure/fast_retraining/blob/master/experiments/05_FraudDetection.ipynb
+
 import numpy as np
 from sklearn.metrics import roc_auc_score, accuracy_score, precision_score, recall_score, f1_score
 
@@ -25,6 +27,17 @@ def classification_metrics_multilabel(y_true, y_pred, labels):
     m_recall = recall_score(y_true, y_pred, labels, average='weighted')
     report = {'Accuracy':m_acc, 'Precision':m_precision, 'Recall':m_recall, 'F1':m_f1}
     return report
+
+
+def classification_metrics(y_true, y_pred):
+    metrics = {
+        'Accuracy': accuracy_score,
+        'Precision': precision_score,
+        'Recall': recall_score,
+        'AUC': roc_auc_score,
+        'F1': f1_score,
+    }
+    return {metric_name:metric(y_true, y_pred) for metric_name, metric in metrics.items()}
 
 
 def binarize_prediction(y, threshold=0.5):
