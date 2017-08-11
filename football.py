@@ -13,7 +13,7 @@ from xgboost import XGBClassifier
 from lightgbm import LGBMClassifier
 from metrics import classification_metrics_multilabel
 from conversion import convert_cols_categorical_to_numeric
-import utils
+from utils import *
 
 
 def get_fifa_stats(match, player_stats):
@@ -396,8 +396,9 @@ def _prepare(infile, dbFolder):
     features.to_pickle(os.path.join(dbFolder, 'features.pkl'))
     labels.to_pickle(os.path.join(dbFolder, 'labels.pkl'))
     print('Time to prepare data: ', (time.time() - start))
+    
 
-def lazyPrepare(dbFolder):
+def prepare(dbFolder):
     infile = os.path.join(dbFolder, "database.sqlite")
     if not os.path.exists(infile):
         print("Unzipping the data...")
@@ -419,22 +420,32 @@ def lazyPrepare(dbFolder):
                                                         random_state=42,
                                                         stratify=labels)
     print('Time to read and split data: ', (time.time() - start))
-    return X_train, X_test, y_train, y_test
+    return Data(X_train, X_test, y_train, y_test)
 
-def timeit(model, X_train, X_test, y_train, y_test, eval_metric):
-    results = {}
-    start = time.time()
-    model.fit(X_train, y_train, verbose=True, eval_metric=eval_metric)
-    results['train_time'] = time.time() - start
-    start = time.time()
-    y_pred = model.predict(X_test)
-    results['test_time'] = time.time() - start
-    labels = ["Win", "Draw", "Defeat"]
-    results['accuracy'] = classification_metrics_multilabel(y_test, y_pred, labels)
-    return results
 
-def runXgb(X_train, X_test, y_train, y_test):
-    model = XGBClassifier(max_depth=3,
+class Football(CpuBenchmark):
+
+    eval_metric = None
+
+    def train(self):
+        self.model.fit(self.X_train, self.y_train, verbose=True, eval_metric=self.eval_metric)
+
+    def accuracy(self):
+        labels = ["Win", "Draw", "Defeat"]
+        return classification_metrics_multilabel(self.y_test, self.y_pred, labels)
+
+
+class XgbFootball(Football):
+
+    eval_metric = 'merror'
+
+
+class LgbFootball(Football):
+
+    eval_metric = 'multi_error'
+        
+
+model_xgb_cpu = XGBClassifier(max_depth=3,
                           n_estimators=300,
                           min_child_weight=5,
                           learning_rate=0.1,
@@ -443,12 +454,9 @@ def runXgb(X_train, X_test, y_train, y_test):
                           gamma=0.1,
                           reg_lambda=1,
                           subsample=1,
-                          n_jobs=utils.get_number_processors())
-    return timeit(model, X_train, X_test, y_train, y_test, 'merror')
+                          n_jobs=get_number_processors())
 
-def runXgbHist(X_train, X_test, y_train, y_test):
-    results = {}
-    model = XGBClassifier(max_depth=0,
+model_xgb_cpu_hist = XGBClassifier(max_depth=0,
                           n_estimators=300,
                           min_child_weight=5,
                           learning_rate=0.1,
@@ -460,11 +468,9 @@ def runXgbHist(X_train, X_test, y_train, y_test):
                           max_leaves=2**3,
                           grow_policy='lossguide',
                           tree_method='hist',
-                          n_jobs=utils.get_number_processors())
-    return timeit(model, X_train, X_test, y_train, y_test, 'merror')
+                          n_jobs=get_number_processors())
 
-def runLgb(X_train, X_test, y_train, y_test):
-    model = LGBMClassifier(num_leaves=2**3,
+model_lgb_cpu = LGBMClassifier(num_leaves=2**3,
                            n_estimators=300,
                            min_child_weight=5,
                            learning_rate=0.1,
@@ -473,18 +479,10 @@ def runLgb(X_train, X_test, y_train, y_test):
                            min_split_gain=0.1,
                            reg_lambda=1,
                            subsample=1,
-                           nthread=utils.get_number_processors())
-    return timeit(model, X_train, X_test, y_train, y_test, 'multi_error')
+                           nthread=get_number_processors())
 
-def benchmark(dbFolder):
-    X_train, X_test, y_train, y_test = lazyPrepare(dbFolder)
-    funcs = {
-        'xgb':      runXgb,
-        'xgb-hist': runXgbHist,
-        'lgbm':     runLgb
-    }
-    results = {}
-    for (name, func) in funcs.items():
-        print("Running '%s' ..." % name)
-        results[name] = func(X_train, X_test, y_train, y_test)
-    return results
+benchmarks = {
+    'xgb':      (XgbFootball, model_xgb_cpu),
+    'xgb-hist': (XgbFootball, model_xgb_cpu_hist),
+    'lgbm':     (LgbFootball, model_lgb_cpu),
+} 
