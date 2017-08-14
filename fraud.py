@@ -3,12 +3,7 @@
 # source: https://github.com/Azure/fast_retraining/blob/master/experiments/05_FraudDetection_GPU.ipynb
 # source: https://www.kaggle.com/dalpozz/creditcardfraud
 
-import json
 import os
-import pkg_resources
-import subprocess
-import sys
-import warnings
 
 import lightgbm as lgb
 from lightgbm import LGBMClassifier
@@ -19,18 +14,15 @@ from sklearn.preprocessing import StandardScaler
 import xgboost as xgb
 from xgboost import XGBClassifier
 
-import utils
 from utils import *
+
 
 def prepare(dbFolder):
 
     # unzip the data
-    csv_file = os.path.join(dbFolder, 'creditcard.csv')
-    if not os.path.exists(csv_file):
-        print('Unzipping the data...')
-        subprocess.check_call('cd %s && unzip creditcardfraud.zip' % dbFolder, shell=True)
-    else:
-        print('Skipping data unzip')
+    csv_name = 'creditcard.csv'
+    unzip(dbFolder, 'creditcardfraud.zip', csv_name)
+    csv_file = os.path.join(dbFolder, csv_name)
     df = pd.read_csv(csv_file)
 
     X = df[[col for col in df.columns if col.startswith('V')]].values
@@ -42,31 +34,13 @@ def prepare(dbFolder):
 
     return Data(X_train, X_test, y_train, y_test)
     
-
-class CpuFraudDetection(CpuBenchmark):
-
-    def accuracy(self):
-        return classification_metrics(self.y_test, self.y_pred)
-
-    
-class GpuFraudDetection:
-
+  
+class LgbmGpuFraudDetection(LgbmGpuBinaryBenchmark):
     num_rounds = 100
 
-    def accuracy(self):
-        y_pred = binarize_prediction(self.y_prob)
-        results = classification_metrics_binary(self.y_test, y_pred)
-        results2 = classification_metrics_binary_prob(self.y_test, self.y_prob)
-        results.update(results2)
-        return results
 
-    
-class LgbmGpuFraudDetection(GpuFraudDetection, LgbmGpuBenchmark):
-    pass
-
-
-class XgbGpuFraudDetection(GpuFraudDetection, XgbGpuBenchmark):
-    pass
+class XgbGpuFraudDetection(XgbGpuBinaryBenchmark):
+    num_rounds = 100
 
     
 def featurisers():
@@ -133,7 +107,7 @@ xgb_gpu_params = {
     'updater':'grow_gpu',
 }
 
-xgb_gpu_hist_params = {
+xgb_cpu_2_hist_params = {
     'max_depth':0, 
     'objective':'binary:logistic', 
     'min_child_weight':1, 
@@ -144,11 +118,11 @@ xgb_gpu_hist_params = {
     'reg_lamda':1, 
     'subsample':1,
     'tree_method':'hist', 
-    'max_leaves':2**3, 
+    'max_leaves':2**3,
     'grow_policy':'lossguide',
 }
 
-lgbm_gpu_params = {
+lgbm_cpu_2_params = {
     'num_leaves': 2**3,
     'learning_rate': 0.1,
     'scale_pos_weight': 2,
@@ -161,10 +135,10 @@ lgbm_gpu_params = {
 }
 
 benchmarks = {
-    'xgb-cpu':      (CpuFraudDetection, xgb_cpu_model),
-    'xgb-cpu-hist': (CpuFraudDetection, xgb_cpu_hist_model),
-    'lgbm-cpu':     (CpuFraudDetection, lgbm_cpu_model),
+    'xgb-cpu':      (CpuBinaryBenchmark, xgb_cpu_model),
+    'xgb-cpu-hist': (CpuBinaryBenchmark, xgb_cpu_hist_model),
+    'lgbm-cpu':     (CpuBinaryBenchmark, lgbm_cpu_model),
     'xgb-gpu': (XgbGpuFraudDetection, xgb_gpu_params),
-    'xgb-gpu-hist': (XgbGpuFraudDetection, xgb_gpu_hist_params),
-    'lgbm-gpu': (LgbmGpuFraudDetection, lgbm_gpu_params),
+    'xgb-cpu-2-hist': (XgbGpuFraudDetection, xgb_cpu_2_hist_params),
+    'lgbm-cpu-2': (LgbmGpuFraudDetection, lgbm_cpu_2_params),
 } 

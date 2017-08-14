@@ -3,6 +3,7 @@ from __future__ import print_function
 
 import os
 import multiprocessing
+import subprocess
 import sys
 import time
 
@@ -75,6 +76,13 @@ class CpuBenchmark(Benchmark):
         self.y_pred = self.model.predict(self.X_test)
 
 
+# CPU benchmark with binary classification metrics
+class CpuBinaryBenchmark(CpuBenchmark):
+
+    def accuracy(self):
+        return classification_metrics(self.y_test, self.y_pred)   
+
+
 class GpuBenchmark(Benchmark):
 
     # number of boosting rounds
@@ -111,6 +119,25 @@ class LgbmGpuBenchmark(GpuBenchmark):
         self.y_prob = self.model.predict(self.X_test)
 
 
+# mixin for binary accuracy computation for GPU benchmarks
+class GpuBinaryMixin:
+
+    def accuracy(self):
+        y_pred = binarize_prediction(self.y_prob)
+        results = classification_metrics_binary(self.y_test, y_pred)
+        results2 = classification_metrics_binary_prob(self.y_test, self.y_prob)
+        results.update(results2)
+        return results
+
+    
+class XgbGpuBinaryBenchmark(GpuBinaryMixin, XgbGpuBenchmark):
+    pass
+
+
+class LgbmGpuBinaryBenchmark(GpuBinaryMixin, LgbmGpuBenchmark):
+    pass
+
+
 def get_number_processors():
     try:
         num = os.cpu_count()
@@ -124,3 +151,17 @@ def print_sys_info():
     print("Xgboost : %s" % os.getenv("XG_COMMIT_ID"))
     print("LightGBM: %s" % os.getenv("LG_COMMIT_ID"))
     print("#jobs   : %d" % get_number_processors())
+
+
+def unarchive(db_folder, unarchiver, archive, target_file):
+    # do not unzip if the target is there
+    target_path = os.path.join(db_folder, target_file)
+    if not os.path.exists(target_path):
+        print('Unzipping the data...')
+        subprocess.check_call('cd %s && %s %s' % (db_folder, unarchiver, archive), shell=True)
+    else:
+        print('Skipping data unzip')
+
+
+def unzip(db_folder, archive, target_file):
+    unarchive(db_folder, 'unzip', archive, target_file)

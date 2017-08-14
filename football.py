@@ -402,12 +402,8 @@ def _prepare(infile, dbFolder):
     
 
 def prepare(dbFolder):
-    infile = os.path.join(dbFolder, "database.sqlite")
-    if not os.path.exists(infile):
-        print("Unzipping the data...")
-        subprocess.check_call("cd %s && unzip soccer.zip" % dbFolder, shell=True)
-    else:
-        print("Skipping data unzip")
+    unzip(dbFolder, 'soccer.zip', 'database.sqlite')
+    infile = os.path.join(dbFolder, 'database.sqlite')
     featurefile = os.path.join(dbFolder, 'features.pkl')
     labelfile = os.path.join(dbFolder, 'labels.pkl')
     if not os.path.exists(featurefile) or not os.path.exists(labelfile):
@@ -518,7 +514,7 @@ xgb_gpu_params = {
     'updater':'grow_gpu',
 }
 
-xgb_gpu_hist_params = {
+xgb_cpu_2_hist_params = {
     'max_depth':0,
     'max_leaves':2**3,
     'objective': 'multi:softprob',
@@ -534,7 +530,7 @@ xgb_gpu_hist_params = {
     'grow_policy':'lossguide',
 }
 
-lgbm_gpu_params = {
+lgbm_cpu_2_params = {
     'num_leaves': 2**3,
     'learning_rate': 0.1,
     'colsample_bytree': 0.80,
@@ -556,6 +552,6 @@ benchmarks = {
     'xgb-cpu-hist': (XgbCpuFootball, xgb_cpu_hist_model),
     'lgbm-cpu':     (LgbmCpuFootball, lgbm_cpu_model),
     'xgb-gpu': (XgbGpuFootball, xgb_gpu_params),
-    'xgb-gpu-hist': (XgbGpuFootball, xgb_gpu_hist_params),
-    'lgbm-gpu': (LgbmGpuFootball, lgbm_gpu_params),
+    'xgb-cpu-2-hist': (XgbGpuFootball, xgb_gpu_hist_params),
+    'lgbm-cpu-2': (LgbmGpuFootball, lgbm_gpu_params),
 } 
