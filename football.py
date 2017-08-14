@@ -1,5 +1,7 @@
 # source: https://www.kaggle.com/airback/match-outcome-prediction-in-football
 # source: https://github.com/Azure/fast_retraining/blob/master/experiments/libs/loaders.py
+# source: https://github.com/Azure/fast_retraining/blob/master/experiments/03_football.ipynb
+# source: https://github.com/Azure/fast_retraining/blob/master/experiments/03_football_GPU.ipynb
 
 from __future__ import print_function
 import os
@@ -388,6 +390,7 @@ def _prepare(infile, dbFolder):
     bk_cols = ['B365', 'BW', 'IW', 'LB', 'PS', 'WH', 'SJ', 'VC', 'GB', 'BS']
     bk_cols_selected = ['B365', 'BW']
     feables = create_feables(matches, fifa, bk_cols_selected, get_overall=True)
+    feables = convert_cols_categorical_to_numeric(feables)
     print("Feables data: ", feables.shape)
     labels = feables['label']
     features = feables[feables.columns.difference(['match_api_id', 'label'])]
@@ -423,7 +426,10 @@ def prepare(dbFolder):
     return Data(X_train, X_test, y_train, y_test)
 
 
-class Football(CpuBenchmark):
+labels = [0, 1, 2]
+
+
+class CpuFootball(CpuBenchmark):
 
     eval_metric = None
 
@@ -431,21 +437,37 @@ class Football(CpuBenchmark):
         self.model.fit(self.X_train, self.y_train, verbose=True, eval_metric=self.eval_metric)
 
     def accuracy(self):
-        labels = ["Win", "Draw", "Defeat"]
         return classification_metrics_multilabel(self.y_test, self.y_pred, labels)
 
 
-class XgbFootball(Football):
+class XgbCpuFootball(CpuFootball):
 
     eval_metric = 'merror'
 
 
-class LgbFootball(Football):
+class LgbmCpuFootball(CpuFootball):
 
     eval_metric = 'multi_error'
+
+
+class GpuFootball:
+
+    num_rounds = 300
+
+    def accuracy(self):
+        y_pred = np.argmax(self.y_prob, axis=1)
+        return classification_metrics_multilabel(self.y_test, y_pred, labels)
+
+    
+class XgbGpuFootball(GpuFootball, XgbGpuBenchmark):
+    pass
+
+
+class LgbmGpuFootball(GpuFootball, LgbmGpuBenchmark):
+    pass
         
 
-model_xgb_cpu = XGBClassifier(max_depth=3,
+xgb_cpu_model = XGBClassifier(max_depth=3,
                           n_estimators=300,
                           min_child_weight=5,
                           learning_rate=0.1,
@@ -456,7 +478,7 @@ model_xgb_cpu = XGBClassifier(max_depth=3,
                           subsample=1,
                           n_jobs=get_number_processors())
 
-model_xgb_cpu_hist = XGBClassifier(max_depth=0,
+xgb_cpu_hist_model = XGBClassifier(max_depth=0,
                           n_estimators=300,
                           min_child_weight=5,
                           learning_rate=0.1,
@@ -470,7 +492,7 @@ model_xgb_cpu_hist = XGBClassifier(max_depth=0,
                           tree_method='hist',
                           n_jobs=get_number_processors())
 
-model_lgb_cpu = LGBMClassifier(num_leaves=2**3,
+lgbm_cpu_model = LGBMClassifier(num_leaves=2**3,
                            n_estimators=300,
                            min_child_weight=5,
                            learning_rate=0.1,
@@ -481,8 +503,59 @@ model_lgb_cpu = LGBMClassifier(num_leaves=2**3,
                            subsample=1,
                            nthread=get_number_processors())
 
+xgb_gpu_params = {
+    'max_depth':3,
+    'objective': 'multi:softprob',
+    'num_class': len(labels),
+    'min_child_weight':5,
+    'learning_rate':0.1,
+    'colsample_bytree':0.8,
+    'scale_pos_weight':2,
+    'gamma':0.1,
+    'reg_lamda':1,
+    'subsample':1,
+    'tree_method':'exact',
+    'updater':'grow_gpu',
+}
+
+xgb_gpu_hist_params = {
+    'max_depth':0,
+    'max_leaves':2**3,
+    'objective': 'multi:softprob',
+    'num_class': len(labels),
+    'min_child_weight':5,
+    'learning_rate':0.1,
+    'colsample_bytree':0.80,
+    'scale_pos_weight':2,
+    'gamma':0.1,
+    'reg_lamda':1,
+    'subsample':1,
+    'tree_method':'hist',
+    'grow_policy':'lossguide',
+}
+
+lgbm_gpu_params = {
+    'num_leaves': 2**3,
+    'learning_rate': 0.1,
+    'colsample_bytree': 0.80,
+    'scale_pos_weight': 2,
+    'min_split_gain': 0.1,
+    'min_child_weight': 5,
+    'reg_lambda': 1,
+    'subsample': 1,
+    'objective':'multiclass',
+    'num_class': len(labels),
+    'task': 'train'
+}
+
+# FINISHED HERE
+# TODO: convert categorical columns to numeric columns
+
 benchmarks = {
-    'xgb':      (XgbFootball, model_xgb_cpu),
-    'xgb-hist': (XgbFootball, model_xgb_cpu_hist),
-    'lgbm':     (LgbFootball, model_lgb_cpu),
+    'xgb-cpu':      (XgbCpuFootball, xgb_cpu_model),
+    'xgb-cpu-hist': (XgbCpuFootball, xgb_cpu_hist_model),
+    'lgbm-cpu':     (LgbmCpuFootball, lgbm_cpu_model),
+    'xgb-gpu': (XgbGpuFootball, xgb_gpu_params),
+    'xgb-gpu-hist': (XgbGpuFootball, xgb_gpu_hist_params),
+    'lgbm-gpu': (LgbmGpuFootball, lgbm_gpu_params),
 } 

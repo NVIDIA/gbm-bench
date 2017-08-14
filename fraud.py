@@ -48,8 +48,10 @@ class CpuFraudDetection(CpuBenchmark):
     def accuracy(self):
         return classification_metrics(self.y_test, self.y_pred)
 
+    
+class GpuFraudDetection:
 
-class GpuFraudDetection(Benchmark):
+    num_rounds = 100
 
     def accuracy(self):
         y_pred = binarize_prediction(self.y_prob)
@@ -58,40 +60,15 @@ class GpuFraudDetection(Benchmark):
         results.update(results2)
         return results
 
-    def cleanup(self):
-        del self.model
-        self.model = None
+    
+class LgbmGpuFraudDetection(GpuFraudDetection, LgbmGpuBenchmark):
+    pass
+
+
+class XgbGpuFraudDetection(GpuFraudDetection, XgbGpuBenchmark):
+    pass
 
     
-class XgbGpuFraudDetection(GpuFraudDetection):
-
-    def prepare(self):
-        self.dtrain = xgb.DMatrix(data=self.X_train, label=self.y_train)
-        self.dtest = xgb.DMatrix(data=self.X_test, label=self.y_test)
-
-    def train(self):
-        num_rounds = 100
-        self.model = xgb.train(self.params, self.dtrain, num_boost_round=num_rounds)
-
-    def test(self):
-        self.y_prob = self.model.predict(self.dtest)
-
-
-class LgbGpuFraudDetection(GpuFraudDetection):
-
-    def prepare(self):
-        self.dtrain = lgb.Dataset(self.X_train, self.y_train, free_raw_data=False)
-        self.dtest = lgb.Dataset(self.X_test, self.y_test, reference=self.dtrain, free_raw_data=False)
-
-    def train(self):
-        num_rounds = 100
-        self.model = lgb.train(self.params, self.dtrain, num_boost_round=num_rounds)
-
-    def test(self):
-        self.y_prob = self.model.predict(self.X_test)
-
-
-
 def featurisers():
     pipeline_steps = [('scale', StandardScaler())]
     continuous_pipeline = Pipeline(steps=pipeline_steps)
@@ -128,7 +105,7 @@ xgb_cpu_hist_model = Pipeline(
                     tree_method='hist',
                     nthread=get_number_processors()))])
 
-lgb_cpu_model = Pipeline(
+lgbm_cpu_model = Pipeline(
         steps=[('features', FeatureUnion(featurisers())),
                ('clf', 
                 LGBMClassifier(
@@ -153,7 +130,7 @@ xgb_gpu_params = {
     'reg_lamda':1, 
     'subsample':1,
     'tree_method':'exact', 
-    'updater':'grow_gpu'
+    'updater':'grow_gpu',
 }
 
 xgb_gpu_hist_params = {
@@ -171,7 +148,7 @@ xgb_gpu_hist_params = {
     'grow_policy':'lossguide',
 }
 
-lgb_gpu_params = {
+lgbm_gpu_params = {
     'num_leaves': 2**3,
     'learning_rate': 0.1,
     'scale_pos_weight': 2,
@@ -186,8 +163,8 @@ lgb_gpu_params = {
 benchmarks = {
     'xgb-cpu':      (CpuFraudDetection, xgb_cpu_model),
     'xgb-cpu-hist': (CpuFraudDetection, xgb_cpu_hist_model),
-    'lgbm-cpu':     (CpuFraudDetection, lgb_cpu_model),
+    'lgbm-cpu':     (CpuFraudDetection, lgbm_cpu_model),
     'xgb-gpu': (XgbGpuFraudDetection, xgb_gpu_params),
     'xgb-gpu-hist': (XgbGpuFraudDetection, xgb_gpu_hist_params),
-    'lgbm-gpu': (LgbGpuFraudDetection, lgb_gpu_params),
+    'lgbm-gpu': (LgbmGpuFraudDetection, lgbm_gpu_params),
 } 

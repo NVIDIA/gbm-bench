@@ -75,6 +75,42 @@ class CpuBenchmark(Benchmark):
         self.y_pred = self.model.predict(self.X_test)
 
 
+class GpuBenchmark(Benchmark):
+
+    # number of boosting rounds
+    num_rounds = None
+
+    def cleanup(self):
+        del self.model
+        self.model = None
+
+
+class XgbGpuBenchmark(GpuBenchmark):
+
+    def prepare(self):
+        self.dtrain = xgb.DMatrix(data=self.X_train, label=self.y_train)
+        self.dtest = xgb.DMatrix(data=self.X_test, label=self.y_test)
+
+    def train(self):
+        self.model = xgb.train(self.params, self.dtrain, num_boost_round=self.num_rounds)
+
+    def test(self):
+        self.y_prob = self.model.predict(self.dtest)
+
+
+class LgbmGpuBenchmark(GpuBenchmark):
+
+    def prepare(self):
+        self.dtrain = lgb.Dataset(self.X_train, self.y_train, free_raw_data=False)
+        self.dtest = lgb.Dataset(self.X_test, self.y_test, reference=self.dtrain, free_raw_data=False)
+
+    def train(self):
+        self.model = lgb.train(self.params, self.dtrain, num_boost_round=self.num_rounds)
+
+    def test(self):
+        self.y_prob = self.model.predict(self.X_test)
+
+
 def get_number_processors():
     try:
         num = os.cpu_count()
