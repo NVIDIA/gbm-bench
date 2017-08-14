@@ -122,7 +122,7 @@ xgb_cpu_2_hist_params = {
     'grow_policy':'lossguide',
 }
 
-lgbm_cpu_2_params = {
+lgbm_gpu_params = {
     'num_leaves': 2**3,
     'learning_rate': 0.1,
     'scale_pos_weight': 2,
@@ -131,7 +131,8 @@ lgbm_cpu_2_params = {
     'reg_lambda': 1,
     'subsample': 1,
     'objective':'binary',
-    'task': 'train',    
+    'task': 'train',
+    'device': 'gpu',
 }
 
 benchmarks = {
@@ -140,5 +141,5 @@ benchmarks = {
     'lgbm-cpu':     (CpuBinaryBenchmark, lgbm_cpu_model),
     'xgb-gpu': (XgbGpuFraudDetection, xgb_gpu_params),
     'xgb-cpu-2-hist': (XgbGpuFraudDetection, xgb_cpu_2_hist_params),
-    'lgbm-cpu-2': (LgbmGpuFraudDetection, lgbm_cpu_2_params),
-} 
+    'lgbm-gpu': (LgbmGpuFraudDetection, lgbm_gpu_params),
+}

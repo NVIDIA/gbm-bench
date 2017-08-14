@@ -530,7 +530,7 @@ xgb_cpu_2_hist_params = {
     'grow_policy':'lossguide',
 }
 
-lgbm_cpu_2_params = {
+lgbm_gpu_params = {
     'num_leaves': 2**3,
     'learning_rate': 0.1,
     'colsample_bytree': 0.80,
@@ -541,7 +541,8 @@ lgbm_cpu_2_params = {
     'subsample': 1,
     'objective':'multiclass',
     'num_class': len(labels),
-    'task': 'train'
+    'task': 'train',
+    'device': 'gpu',
 }
 
 # FINISHED HERE
@@ -552,6 +553,6 @@ benchmarks = {
     'xgb-cpu-hist': (XgbCpuFootball, xgb_cpu_hist_model),
     'lgbm-cpu':     (LgbmCpuFootball, lgbm_cpu_model),
     'xgb-gpu': (XgbGpuFootball, xgb_gpu_params),
-    'xgb-cpu-2-hist': (XgbGpuFootball, xgb_gpu_hist_params),
+    'xgb-cpu-2-hist': (XgbGpuFootball, xgb_cpu_2_hist_params),
     'lgbm-cpu-2': (LgbmGpuFootball, lgbm_gpu_params),
 } 
