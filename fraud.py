@@ -107,8 +107,8 @@ xgb_gpu_params = {
     'updater':'grow_gpu',
 }
 
-xgb_cpu_2_hist_params = {
-    'max_depth':0, 
+xgb_gpu_hist_params = {
+    'max_depth':4, 
     'objective':'binary:logistic', 
     'min_child_weight':1, 
     'eta':0.1, 
@@ -117,9 +117,10 @@ xgb_cpu_2_hist_params = {
     'gamma':0.1, 
     'reg_lamda':1, 
     'subsample':1,
-    'tree_method':'hist', 
+    'tree_method':'gpu_hist',
     'max_leaves':2**3,
-    'grow_policy':'lossguide',
+# lossguide currently is not supported on GPU
+#    'grow_policy':'lossguide',
 }
 
 lgbm_gpu_params = {
@@ -140,6 +141,6 @@ benchmarks = {
     'xgb-cpu-hist': (CpuBinaryBenchmark, xgb_cpu_hist_model),
     'lgbm-cpu':     (CpuBinaryBenchmark, lgbm_cpu_model),
     'xgb-gpu': (XgbGpuFraudDetection, xgb_gpu_params),
-    'xgb-cpu-2-hist': (XgbGpuFraudDetection, xgb_cpu_2_hist_params),
+    'xgb-gpu-hist': (XgbGpuFraudDetection, xgb_gpu_hist_params),
     'lgbm-gpu': (LgbmGpuFraudDetection, lgbm_gpu_params),
 }

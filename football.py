@@ -514,9 +514,9 @@ xgb_gpu_params = {
     'updater':'grow_gpu',
 }
 
-xgb_cpu_2_hist_params = {
-    'max_depth':0,
-    'max_leaves':2**3,
+xgb_gpu_hist_params = {
+    'max_depth': 3,
+    'max_leaves': 2**3,
     'objective': 'multi:softprob',
     'num_class': len(labels),
     'min_child_weight':5,
@@ -526,8 +526,8 @@ xgb_cpu_2_hist_params = {
     'gamma':0.1,
     'reg_lamda':1,
     'subsample':1,
-    'tree_method':'hist',
-    'grow_policy':'lossguide',
+    'tree_method':'gpu_hist',
+#    'grow_policy':'lossguide',
 }
 
 lgbm_gpu_params = {
@@ -545,14 +545,10 @@ lgbm_gpu_params = {
     'device': 'gpu',
 }
 
-# FINISHED HERE
-# TODO: convert categorical columns to numeric columns
-
 benchmarks = {
     'xgb-cpu':      (XgbCpuFootball, xgb_cpu_model),
     'xgb-cpu-hist': (XgbCpuFootball, xgb_cpu_hist_model),
     'lgbm-cpu':     (LgbmCpuFootball, lgbm_cpu_model),
     'xgb-gpu': (XgbGpuFootball, xgb_gpu_params),
-    'xgb-cpu-2-hist': (XgbGpuFootball, xgb_cpu_2_hist_params),
-    'lgbm-cpu-2': (LgbmGpuFootball, lgbm_gpu_params),
+    'xgb-gpu-hist': (XgbGpuFootball, xgb_gpu_hist_params),
 } 
