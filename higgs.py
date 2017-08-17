@@ -10,6 +10,7 @@ import time
 import sys
 
 import lightgbm as lgbm
+import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
 import xgboost as xgb
@@ -34,7 +35,7 @@ def prepare(db_folder):
     ]
     csv_file = os.path.join(db_folder, csv_name)
     start = time.time()
-    df = pd.read_csv(csv_file, names=cols)
+    df = pd.read_csv(csv_file, names=cols, dtype=np.float32)
     X, y = generate_feables(df)
     X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y, random_state=77, test_size=500000)
     load_time = time.time() - start

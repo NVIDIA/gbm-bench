@@ -4,17 +4,20 @@
 # source: https://github.com/Azure/fast_retraining/blob/master/experiments/03_football_GPU.ipynb
 
 from __future__ import print_function
+
 import os
 import subprocess
+
+from lightgbm import LGBMClassifier
 import numpy as np
 import pandas as pd
 import sqlite3
 from sklearn.model_selection import train_test_split
 import time
 from xgboost import XGBClassifier
-from lightgbm import LGBMClassifier
-from metrics import classification_metrics_multilabel
+
 from conversion import convert_cols_categorical_to_numeric
+from metrics import classification_metrics_multilabel
 from utils import *
 
 

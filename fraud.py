@@ -7,6 +7,7 @@ import os
 
 import lightgbm as lgb
 from lightgbm import LGBMClassifier
+import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline, FeatureUnion
@@ -23,7 +24,7 @@ def prepare(dbFolder):
     csv_name = 'creditcard.csv'
     unzip(dbFolder, 'creditcardfraud.zip', csv_name)
     csv_file = os.path.join(dbFolder, csv_name)
-    df = pd.read_csv(csv_file)
+    df = pd.read_csv(csv_file, dtype=np.float32)
 
     X = df[[col for col in df.columns if col.startswith('V')]].values
     y = df['Class'].values

@@ -119,8 +119,8 @@ class LgbmGpuBenchmark(GpuBenchmark):
         self.y_prob = self.model.predict(self.X_test)
 
 
-# mixin for binary accuracy computation for GPU benchmarks
-class GpuBinaryMixin:
+# mixin for binary accuracy computation for predictions expressed as probability
+class BinaryProbMixin:
 
     def accuracy(self):
         y_pred = binarize_prediction(self.y_prob)
@@ -130,11 +130,11 @@ class GpuBinaryMixin:
         return results
 
     
-class XgbGpuBinaryBenchmark(GpuBinaryMixin, XgbGpuBenchmark):
+class XgbGpuBinaryBenchmark(BinaryProbMixin, XgbGpuBenchmark):
     pass
 
 
-class LgbmGpuBinaryBenchmark(GpuBinaryMixin, LgbmGpuBenchmark):
+class LgbmGpuBinaryBenchmark(BinaryProbMixin, LgbmGpuBenchmark):
     pass
 
 
