@@ -29,6 +29,16 @@ def classification_metrics_multilabel(y_true, y_pred, labels):
     return report
 
 
+def classification_metrics_average(y_true, y_pred, average):
+    metrics = {
+        'Accuracy': accuracy_score,
+        'Precision': lambda y_true, y_pred: precision_score(y_true, y_pred, average=average),
+        'Recall': lambda y_true, y_pred: recall_score(y_true, y_pred, average=average),
+        'F1': lambda y_true, y_pred: f1_score(y_true, y_pred, average=average),
+    }
+    return {metric_name:metric(y_true, y_pred) for metric_name, metric in metrics.items()}    
+
+
 def classification_metrics(y_true, y_pred):
     metrics = {
         'Accuracy': accuracy_score,
