@@ -261,6 +261,7 @@ class PlanetBenchmark(Benchmark):
         results = {'train_time': 0, 'test_time': 0}
 
         for i_class in range(n_classes):
+            print('benchmarking class %d' % i_class)
             # data for the per-class benchmark
             y_train_class = self.y_train[:, i_class]
             y_test_class = self.y_test[:, i_class]
@@ -378,6 +379,7 @@ lgbm_gpu_params = {
     'max_bin': 63,
 }
 
+
 benchmarks = {
     'xgb-cpu': (XgbPlanetBenchmark, xgb_cpu_params),
     'xgb-cpu-hist': (XgbPlanetBenchmark, xgb_cpu_hist_params),
@@ -385,7 +387,5 @@ benchmarks = {
     # 'xgb-gpu' runs out of memory
     #'xgb-gpu': (XgbPlanetBenchmark, xgb_gpu_params),
     'xgb-gpu-hist': (XgbPlanetBenchmark, xgb_gpu_hist_params),
-    # 'lgbm-gpu' runs out of host memory with all 17 classes
-    # TODO: look into this
-    #'lgbm-gpu': (LgbmPlanetBenchmark, lgbm_gpu_params),
+    'lgbm-gpu': (LgbmPlanetBenchmark, lgbm_gpu_params),
 }

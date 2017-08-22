@@ -90,7 +90,6 @@ class GpuBenchmark(Benchmark):
 
     def cleanup(self):
         del self.model
-        self.model = None
 
 
 class XgbGpuBenchmark(GpuBenchmark):
@@ -110,13 +109,17 @@ class LgbmGpuBenchmark(GpuBenchmark):
 
     def prepare(self):
         self.dtrain = lgb.Dataset(self.X_train, self.y_train, free_raw_data=False)
-        self.dtest = lgb.Dataset(self.X_test, self.y_test, reference=self.dtrain, free_raw_data=False)
 
     def train(self):
         self.model = lgb.train(self.params, self.dtrain, num_boost_round=self.num_rounds)
 
     def test(self):
         self.y_prob = self.model.predict(self.X_test)
+
+    def cleanup(self):
+        self.model.free_dataset()
+        del self.dtrain
+        GpuBenchmark.cleanup(self)
 
 
 # mixin for binary accuracy computation for predictions expressed as probability
