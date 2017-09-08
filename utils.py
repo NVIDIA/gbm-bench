@@ -12,6 +12,7 @@ import xgboost as xgb
 
 from metrics import *
 
+
 # just a container for (X|y)_(train,test)
 class Data:
     def __init__(self, X_train, X_test, y_train, y_test):
@@ -22,7 +23,6 @@ class Data:
 
 
 class Benchmark:
-
     # params is either model or parameters for the model
     def __init__(self, data, params):
         # set the data
@@ -34,26 +34,20 @@ class Benchmark:
 
     def run(self):
         results = {}
-
         # additional data and model preparation, if necessary
         self.prepare()
-
         # training time
         start = time.time()
         self.train()
         results['train_time'] = time.time() - start
-
         # testing time
         start = time.time()
         self.test()
         results['test_time'] = time.time() - start
-
         # accuracy
         results['accuracy'] = self.accuracy()
-
         # cleanup, if necessary
         self.cleanup()
-
         return results
 
     def prepare(self):
@@ -64,7 +58,6 @@ class Benchmark:
 
     
 class CpuBenchmark(Benchmark):
-
     def __init__(self, data, model):
         Benchmark.__init__(self, data, model)
         self.model = model
@@ -78,13 +71,11 @@ class CpuBenchmark(Benchmark):
 
 # CPU benchmark with binary classification metrics
 class CpuBinaryBenchmark(CpuBenchmark):
-
     def accuracy(self):
         return classification_metrics(self.y_test, self.y_pred)   
 
 
 class GpuBenchmark(Benchmark):
-
     # number of boosting rounds
     num_rounds = None
 
@@ -93,7 +84,6 @@ class GpuBenchmark(Benchmark):
 
 
 class XgbGpuBenchmark(GpuBenchmark):
-
     def prepare(self):
         self.dtrain = xgb.DMatrix(data=self.X_train, label=self.y_train)
         self.dtest = xgb.DMatrix(data=self.X_test, label=self.y_test)
@@ -106,7 +96,6 @@ class XgbGpuBenchmark(GpuBenchmark):
 
 
 class LgbmGpuBenchmark(GpuBenchmark):
-
     def prepare(self):
         self.dtrain = lgb.Dataset(self.X_train, self.y_train, free_raw_data=False)
 
@@ -124,7 +113,6 @@ class LgbmGpuBenchmark(GpuBenchmark):
 
 # mixin for binary accuracy computation for predictions expressed as probability
 class BinaryProbMixin:
-
     def accuracy(self):
         y_pred = binarize_prediction(self.y_prob)
         results = classification_metrics_binary(self.y_test, y_pred)
@@ -161,7 +149,8 @@ def unarchive(db_folder, unarchiver, archive, target_file):
     target_path = os.path.join(db_folder, target_file)
     if not os.path.exists(target_path):
         print('Unzipping the data...')
-        subprocess.check_call('cd %s && %s %s' % (db_folder, unarchiver, archive), shell=True)
+        subprocess.check_call('cd %s && %s %s' % \
+                              (db_folder, unarchiver, archive), shell=True)
     else:
         print('Skipping data unzip')
 

@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-
 import os
 import sys
 import argparse
@@ -14,13 +13,12 @@ def parseArgs():
                         help="The dataset to be used for benchmarking")
     parser.add_argument("-root", default="/datasets",
                         type=str, help="The root datasets folder")
-    parser.add_argument(
-        "-benchmarks", default="all", type=str,
-        help="The comma-separated list of benchmarks to run; 'all' run all of them")
-    parser.add_argument(
-        "-ngpus", default=1, type=int,
-        help=("The number of GPUs to use for the benchmarks; "
-              "ignored when not supported"))
+    parser.add_argument("-benchmarks", default="all", type=str,
+                        help=("Comma-separated list of benchmarks to run; "
+                              "'all' run all"))
+    parser.add_argument("-ngpus", default=1, type=int,
+                        help=("#GPUs to use for the benchmarks; "
+                              "ignored when not supported"))
     args = parser.parse_args()
     return args
 
@@ -46,7 +44,6 @@ def benchmark(dbFolder, module, benchmarks, extra_params):
                 params[extra_key] = extra_value
         print("Running '%s' ..." % name)
         results[name] = cls(data, params).run()
-    
     return results
 
 def main():
@@ -58,7 +55,11 @@ def main():
     module = __import__(args.dataset)
     extra_params = {'n_gpus': args.ngpus}
     results = benchmark(folder, module, benchmarks, extra_params)
-    print(json.dumps(results, indent=2, sort_keys=True))
+    output = json.dumps(results, indent=2, sort_keys=True)
+    print(output)
+    fp = open("%s.json" % args.dataset, "w")
+    fp.write(output + "\n")
+    fp.close()
     return
 
 if __name__ == '__main__':

@@ -19,20 +19,16 @@ from utils import *
 
 
 def prepare(dbFolder):
-
     # unzip the data
     csv_name = 'creditcard.csv'
     unzip(dbFolder, 'creditcardfraud.zip', csv_name)
     csv_file = os.path.join(dbFolder, csv_name)
     df = pd.read_csv(csv_file, dtype=np.float32)
-
     X = df[[col for col in df.columns if col.startswith('V')]].values
     y = df['Class'].values
-
     print('Features: ', X.shape)
     print('Labels: ', y.shape)
     X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y, random_state=42, test_size=0.3)
-
     return Data(X_train, X_test, y_train, y_test)
     
   

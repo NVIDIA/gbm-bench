@@ -8,7 +8,6 @@ def _get_nominal_integer_dict(nominal_vals):
         nominal_vals (pd.Series): A series.
     Returns:
         d (dict): An dictionary with numeric values.
-
     """
     d = {}
     for val in nominal_vals:
@@ -25,7 +24,6 @@ def _convert_to_integer(srs, d):
         d (dict): A dictionary mapping values to integers
     Returns:
         srs (pd.Series): An series with numeric values.
-
     """
     return srs.map(lambda x: d[x])
 
@@ -47,7 +45,6 @@ def convert_cols_categorical_to_numeric(df, col_list=None):
         0        0        1
         1        1        2
         2        2        3
-
     """
     if col_list is None: col_list = []
     ret = pd.DataFrame()
@@ -78,7 +75,6 @@ def convert_related_cols_categorical_to_numeric(df, col_list):
         0        0         2        1
         1        1         3        2
         2        2         4        3
-
     """
     ret = pd.DataFrame()
     values=None

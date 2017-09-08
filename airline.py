@@ -37,7 +37,8 @@ def prepare(db_folder):
     dtype_columns = {
         'Year': dtype, 'Month': dtype, 'DayofMonth': dtype, 'DayofWeek': dtype,
         'CRSDepTime': dtype, 'CRSArrTime': dtype, 'FlightNum': dtype,
-        'ActualElapsedTime': dtype, 'Distance': dtype, 'Diverted': dtype, 'ArrDelay': dtype,
+        'ActualElapsedTime': dtype, 'Distance': dtype,
+        'Diverted': dtype, 'ArrDelay': dtype,
     }
     start = time.time()
     df1 =  pd.read_csv(os.path.join(db_folder, 'airline_14col.data.bz2'),
@@ -47,33 +48,31 @@ def prepare(db_folder):
     df3 = convert_cols_categorical_to_numeric(df2, col_list='UniqueCarrier')
     del df2
     df = df3
-    df['ArrDelayBinary'] = 1*(df['ArrDelay'] > 0)
-    
+    df['ArrDelayBinary'] = 1*(df['ArrDelay'] > 0)    
     X, y = generate_feables(df)
     del df
-    X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y, random_state=42, test_size=0.2)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y,
+                                                        random_state=42,
+                                                        test_size=0.2)
     del X, y
     load_time = time.time() - start
-    print('Airline dataset loaded in %.2fs' % load_time, file=sys.stderr)
-    
+    print('Airline dataset loaded in %.2fs' % load_time, file=sys.stderr)    
     return Data(X_train, X_test, y_train, y_test)
 
 
 airline_num_rounds = 200
 
-class CpuAirline(BinaryProbMixin, CpuBenchmark):
 
+class CpuAirline(BinaryProbMixin, CpuBenchmark):
     def test(self):
         self.y_prob = np.clip(self.model.predict(self.X_test), 0.0001, 0.9999)
 
 
 class XgbGpuAirline(XgbGpuBinaryBenchmark):
-
     num_rounds = airline_num_rounds
 
 
 class LgbmGpuAirline(LgbmGpuBinaryBenchmark):
-
     num_rounds = airline_num_rounds
 
 
@@ -159,7 +158,6 @@ lgbm_gpu_params = {
 }
 
 benchmarks = {
-
     # not benchmarked, as it takes very long to train
     # 'xgb-cpu': (CpuAirline, xgb_cpu_model),
     'xgb-cpu-hist': (CpuAirline, xgb_cpu_hist_model),

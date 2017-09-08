@@ -28,16 +28,19 @@ def prepare(db_folder):
     # reading compressed csv is supported in pandas
     csv_name = 'HIGGS.csv.gz'
     cols = [
-        'boson', 'lepton_pT', 'lepton_eta', 'lepton_phi', 'missing_energy_magnitude', 'missing_energy_phi',
-        'jet_1_pt', 'jet_1_eta', 'jet_1_phi', 'jet_1_b-tag', 'jet_2_pt', 'jet_2_eta', 'jet_2_phi', 'jet_2_b-tag',
-        'jet_3_pt', 'jet_3_eta', 'jet_3_phi', 'jet_3_b-tag', 'jet_4_pt', 'jet_4_eta', 'jet_4_phi', 'jet_4_b-tag',
+        'boson', 'lepton_pT', 'lepton_eta', 'lepton_phi', 'missing_energy_magnitude',
+        'missing_energy_phi', 'jet_1_pt', 'jet_1_eta', 'jet_1_phi', 'jet_1_b-tag',
+        'jet_2_pt', 'jet_2_eta', 'jet_2_phi', 'jet_2_b-tag', 'jet_3_pt', 'jet_3_eta',
+        'jet_3_phi', 'jet_3_b-tag', 'jet_4_pt', 'jet_4_eta', 'jet_4_phi', 'jet_4_b-tag',
         'm_jj', 'm_jjj', 'm_lv', 'm_jlv', 'm_bb', 'm_wbb', 'm_wwbb'
     ]
     csv_file = os.path.join(db_folder, csv_name)
     start = time.time()
     df = pd.read_csv(csv_file, names=cols, dtype=np.float32)
     X, y = generate_feables(df)
-    X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y, random_state=77, test_size=500000)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y,
+                                                        random_state=77,
+                                                        test_size=500000)
     load_time = time.time() - start
     print('Higgs dataset loaded in %.2fs' % load_time, file=sys.stderr)
     return Data(X_train, X_test, y_train, y_test)
@@ -46,12 +49,10 @@ higgs_num_rounds = 200
 
 
 class XgbGpuHiggs(XgbGpuBinaryBenchmark):
-
     num_rounds = higgs_num_rounds
 
 
 class LgbmGpuHiggs(LgbmGpuBinaryBenchmark):
-
     num_rounds = higgs_num_rounds
 
 
