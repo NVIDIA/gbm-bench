@@ -128,8 +128,12 @@ class XgbGpuBinaryBenchmark(BinaryProbMixin, XgbGpuBenchmark):
 class LgbmGpuBinaryBenchmark(BinaryProbMixin, LgbmGpuBenchmark):
     pass
 
+# set this to override the return value of get_number_processors()
+number_processors_override = None
 
 def get_number_processors():
+    if number_processors_override is not None:
+        return number_processors_override
     try:
         num = os.cpu_count()
     except:
