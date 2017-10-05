@@ -461,6 +461,6 @@ benchmarks = {
     'xgb-cpu':      (XgbCpuFootball, xgb_cpu_model),
     'xgb-cpu-hist': (XgbCpuFootball, xgb_cpu_hist_model),
     'lgbm-cpu':     (LgbmCpuFootball, lgbm_cpu_model),
-    'xgb-gpu': (XgbGpuFootball, xgb_gpu_params),
+    'xgb-gpu':      (XgbGpuFootball, xgb_gpu_params),
     'xgb-gpu-hist': (XgbGpuFootball, xgb_gpu_hist_params),
 } 

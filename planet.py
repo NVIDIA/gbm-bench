@@ -348,11 +348,11 @@ lgbm_gpu_params = {
 
 
 benchmarks = {
-    'xgb-cpu': (XgbPlanetBenchmark, xgb_cpu_params),
+    'xgb-cpu':      (XgbPlanetBenchmark, xgb_cpu_params),
     'xgb-cpu-hist': (XgbPlanetBenchmark, xgb_cpu_hist_params),
-    'lgbm-cpu': (LgbmPlanetBenchmark, lgbm_cpu_params),
+    'lgbm-cpu':     (LgbmPlanetBenchmark, lgbm_cpu_params),
     # 'xgb-gpu' runs out of memory
     #'xgb-gpu': (XgbPlanetBenchmark, xgb_gpu_params),
     'xgb-gpu-hist': (XgbPlanetBenchmark, xgb_gpu_hist_params),
-    'lgbm-gpu': (LgbmPlanetBenchmark, lgbm_gpu_params),
+    'lgbm-gpu':     (LgbmPlanetBenchmark, lgbm_gpu_params),
 }

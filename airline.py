@@ -161,9 +161,9 @@ benchmarks = {
     # not benchmarked, as it takes very long to train
     # 'xgb-cpu': (CpuAirline, xgb_cpu_model),
     'xgb-cpu-hist': (CpuAirline, xgb_cpu_hist_model),
-    'lgbm-cpu': (CpuAirline, lgbm_cpu_model),
+    'lgbm-cpu':     (CpuAirline, lgbm_cpu_model),
     # GPU model runs out of memory
     # 'xgb-gpu': (XgbGpuAirline, xgb_gpu_params),
     'xgb-gpu-hist': (XgbGpuAirline, xgb_gpu_hist_params),
-    'lgbm-gpu': (LgbmGpuAirline, lgbm_gpu_params),
+    'lgbm-gpu':     (LgbmGpuAirline, lgbm_gpu_params),
 }

@@ -137,9 +137,9 @@ benchmarks = {
     # xgb-cpu takes almost an hour to train, and is therefore commented out by default
     # 'xgb-cpu': (CpuBinaryBenchmark, xgb_cpu_model),
     'xgb-cpu-hist': (CpuBinaryBenchmark, xgb_cpu_hist_model),
-    'lgbm-cpu': (CpuBinaryBenchmark, lgbm_cpu_model),
+    'lgbm-cpu':     (CpuBinaryBenchmark, lgbm_cpu_model),
     # xgb-gpu runs out of memory
     # 'xgb-gpu': (XgbGpuHiggs, xgb_gpu_params),
     'xgb-gpu-hist': (XgbGpuHiggs, xgb_gpu_hist_params),
-    'lgbm-gpu': (LgbmGpuHiggs, lgbm_gpu_params)
+    'lgbm-gpu':     (LgbmGpuHiggs, lgbm_gpu_params)
 }

@@ -2,43 +2,34 @@
 This repo tries to benchmark boosting frameworks against some of the popular
 ML datasets.
 
-# Setting up this project
-## pre-requisites
-dockerfiles github project (and its dependencies) is needed.
+# Setting up this repo
 ```bash
-$ git clone https://github.com/teju85/dockerfiles
-$ cd dockerfiles/ubuntu1604
-$ make xgb-lgb
+  # make sure that you have CUDA SDK (or atleast nvidia driver) installed
+  # install docker and nvidia-docker, first
+
+  # dockerfiles github project is needed to build the docker image
+  $ git clone https://github.com/teju85/dockerfiles
+  $ cd dockerfiles/ubuntu1604
+  $ make xgb-lgb
+
+  # this project
+  $ cd ../..
+  $ git clone https://github.com/teju85/gbm-perf   ## TODO!
+
+  $ cd ..
+  # Download the datasets as described in the next section.
 ```
 
-## project setup
-```bash
-$ git clone https://yagr.nvidia.com/snanditale/gbm-perf
-```
-Then download the datasets as described in the next section. OR, inside Nvidia
-you can find them at the following place /home/scratch.bdc-mlig/snanditale/boosting/gbm-datasets
-from the 'bdc-ml-lsf-master' node. It is recommended to copy this folder into
-your own location.
-
-## docker container
-```bash
-$ nvidia-docker run --rm -it -e USER=$USER -e UID=$(id -u $USER) -v /path/to/your/gbm-datasets:/datasets -v /path/to/this/repo:/benchmarks xgb-lgb:latest /bin/bash
-user@container$ cd /benchmarks
-user@container$ ./runme.py -root /datasets -dataset football
-user@container$ exit
-```
-
-# Instructions on downloading datasets
+# Datasets
 This section contains info on how to download the datasets for this exercise.
 Note that to download some datasets, one may have to sign-up in the respective
 websites and probably also have to agree to their T&C's! Also note that to
 maintain brevity, the dataset description is omitted out of this document.
-Interested readers would want to visit the respective links to know more about
-the corresponding dataset.
+Interested readers would want to visit respective links to know more about it.
 
 At first, create a root folder which contains all the datasets that will be
-downloaded here. From here onwards, unless otherwise mentioned, all folders and
-paths will be wrt this root folder only.
+downloaded here. Let's calls it 'gbm-datasets'. From here onwards, unless
+otherwise mentioned, all folders and paths will be wrt this root folder only.
 ```bash
 $ mkdir boosting-datasets
 ```
@@ -103,3 +94,12 @@ $ wget http://www.cse.fau.edu/~xqzhu/Stream/sensor.arff
 ## Planet: Understanding the Amazon from Space
 Planet-Kaggle competition, as found here: https://www.kaggle.com/c/planet-understanding-the-amazon-from-space/data
 Download the 'train_v2.csv.zip' from this page into a directory named 'planet'.
+
+# Running benchmarks
+```bash
+  $ ./dockerfiles/scripts/launch -user xgb-lgb:latest /bin/bash
+  user@container$ cd /work/gbm-perf
+  user@container$ ./runme.py -root ../gbm-datasets -dataset football
+  user@container$ exit
+  $ cat ./gbm-perf/football.json
+```

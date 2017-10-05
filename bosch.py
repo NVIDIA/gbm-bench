@@ -315,10 +315,10 @@ lgbm_gpu_params = {
 
 
 benchmarks = {
-    'xgb-cpu': (CpuBinaryBenchmark, xgb_cpu_model),
+    'xgb-cpu':      (CpuBinaryBenchmark, xgb_cpu_model),
     'xgb-cpu-hist': (CpuBinaryBenchmark, xgb_cpu_hist_model),
-    'lgbm-cpu': (CpuBinaryBenchmark, lgbm_cpu_model),
-    'xgb-gpu': (XgbGpuBosch, xgb_gpu_params),
+    'lgbm-cpu':     (CpuBinaryBenchmark, lgbm_cpu_model),
+    'xgb-gpu':      (XgbGpuBosch, xgb_gpu_params),
     'xgb-gpu-hist': (XgbGpuBosch, xgb_gpu_hist_params),
-    'lgbm-gpu': (LgbmGpuBosch, lgbm_gpu_params)
+    'lgbm-gpu':     (LgbmGpuBosch, lgbm_gpu_params)
 }
