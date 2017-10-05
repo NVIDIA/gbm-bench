@@ -1,6 +1,8 @@
 # Introduction
 This repo tries to benchmark boosting frameworks against some of the popular
-ML datasets.
+ML datasets. This is a more scriptable version of Microsoft's work on comparing
+LightGBM and XGBoost: https://github.com/Azure/fast_retraining/. Most of the
+datasets used here are the same as in the above repo.
 
 # Setting up this repo
 ```bash
@@ -49,9 +51,9 @@ Download the 'dictionary.html' and 'train_set.zip' files from this page inside a
 directory named 'allstate'.
 
 ## BCI
-Brain Computer Interaction dataset.
-This is something I'm not sure where the MS researchers got from!
-I tried a few trivial google-search attempts with no success.
+TODO!
+Brain Computer Interaction dataset. This is something I'm not sure how the MS
+researchers got from. A few trivial google-searches were unsuccessful.
 
 ## Bosch
 Bosch dataset as given out on Kaggle competition here: https://www.kaggle.com/c/bosch-production-line-performance/data
@@ -103,3 +105,7 @@ Download the 'train_v2.csv.zip' from this page into a directory named 'planet'.
   user@container$ exit
   $ cat ./gbm-perf/football.json
 ```
+
+# TODOs
+1. Add benchmark for Criteo dataset
+2. Figure out how to get BCI dataset
