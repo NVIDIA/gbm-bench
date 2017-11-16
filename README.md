@@ -12,7 +12,7 @@ datasets used here are the same as in the above repo.
   # dockerfiles github project is needed to build the docker image
   $ git clone https://github.com/teju85/dockerfiles
   $ cd dockerfiles/ubuntu1604
-  $ make xgb-lgb
+  $ make gbm
 
   # this project
   $ cd ../..
@@ -37,7 +37,8 @@ $ mkdir boosting-datasets
 ```
 
 ## Airline
-Airline dataset and more info on it can be found here: http://kt.ijs.si/elena_ikonomovska/data.html
+Airline dataset and more info on it can be found here:
+http://kt.ijs.si/elena_ikonomovska/data.html
 ```bash
 $ mkdir airline
 $ cd airline
@@ -45,8 +46,8 @@ $ wget http://kt.ijs.si/elena_ikonomovska/datasets/airline/airline_14col.data.bz
 ```
 
 ## Allstate
-This is the dataset in the Kaggle-AllState claim prediction challenge.
-Link for the dataset is here: https://www.kaggle.com/c/ClaimPredictionChallenge/data
+This is the dataset in the Kaggle-AllState claim prediction challenge. Link for
+the dataset is here: https://www.kaggle.com/c/ClaimPredictionChallenge/data
 Download the 'dictionary.html' and 'train_set.zip' files from this page inside a
 directory named 'allstate'.
 
@@ -56,12 +57,14 @@ Brain Computer Interaction dataset. This is something I'm not sure how the MS
 researchers got from. A few trivial google-searches were unsuccessful.
 
 ## Bosch
-Bosch dataset as given out on Kaggle competition here: https://www.kaggle.com/c/bosch-production-line-performance/data
-Download the files 'train_numeric.csv.zip', 'train_date.csv.zip' and 'train_categorial.csv.zip'
-into a folder named 'bosch'.
+Bosch dataset as given out on Kaggle competition here:
+https://www.kaggle.com/c/bosch-production-line-performance/data. Download the
+files 'train_numeric.csv.zip', 'train_date.csv.zip' and
+'train_categorial.csv.zip' into a folder named 'bosch'.
 
 ## Criteo
-Criteo display ad challenge as found here: https://www.kaggle.com/c/criteo-display-ad-challenge
+Criteo display ad challenge as found here:
+https://www.kaggle.com/c/criteo-display-ad-challenge
 ```bash
 $ mkdir criteo
 $ cd criteo
@@ -69,16 +72,21 @@ $ wget https://s3-eu-west-1.amazonaws.com/criteo-labs/dac.tar.gz
 ```
 
 ## Football
-Football dataset and its info can be found on Kaggle here: https://www.kaggle.com/hugomathien/soccer
-Download the 'soccer.zip' from this page into a directory named 'football'.
-Code used to process this dataset is shamelessly borrowed from here: https://www.kaggle.com/airback/match-outcome-prediction-in-football
+Football dataset and its info can be found on Kaggle here:
+https://www.kaggle.com/hugomathien/soccer. Download the 'soccer.zip' from this
+page into a directory named 'football'. Code used to process this dataset is
+borrowed from here:
+https://www.kaggle.com/airback/match-outcome-prediction-in-football. Note that
+it could take quite sometime to 'prepare' the dataset to be passed to GBM algos!
 
 ## Fraud Detection
-Credit Card Fraud Detection Kaggle competition as found here: https://www.kaggle.com/dalpozz/creditcardfraud
-Download the creditcardfraud.zip from this page into a folder named 'fraud'.
+Credit Card Fraud Detection Kaggle competition as found here:
+https://www.kaggle.com/dalpozz/creditcardfraud. Download the creditcardfraud.zip
+from this page into a folder named 'fraud'.
 
 ## Higgs dataset
-This is the dataset as found in the UCI repo here: https://archive.ics.uci.edu/ml/datasets/HIGGS
+This is the dataset as found in the UCI repo here:
+https://archive.ics.uci.edu/ml/datasets/HIGGS
 ```bash
 $ mkdir higgs
 $ cd higgs
@@ -86,7 +94,8 @@ $ wget https://archive.ics.uci.edu/ml/machine-learning-databases/00280/HIGGS.csv
 ```
 
 ## IOT
-Sensor stream data from Berkeley as found here: http://www.cse.fau.edu/~xqzhu/stream.html
+Sensor stream data from Berkeley as found here:
+http://www.cse.fau.edu/~xqzhu/stream.html
 ```bash
 $ mkdir iot
 $ cd iot
@@ -94,18 +103,31 @@ $ wget http://www.cse.fau.edu/~xqzhu/Stream/sensor.arff
 ```
 
 ## Planet: Understanding the Amazon from Space
-Planet-Kaggle competition, as found here: https://www.kaggle.com/c/planet-understanding-the-amazon-from-space/data
+Planet-Kaggle competition, as found here:
+https://www.kaggle.com/c/planet-understanding-the-amazon-from-space/data.
 Download the 'train_v2.csv.zip' from this page into a directory named 'planet'.
 
 # Running benchmarks
+This assumes that one has elevated permissions on the system where this docker
+image will be run for benchmarking!
 ```bash
-  $ ./dockerfiles/scripts/launch -user xgb-lgb:latest /bin/bash
+  $ ./dockerfiles/scripts/launch -user gbm:latest /bin/bash
   user@container$ cd /work/gbm-perf
   user@container$ ./runme.py -root ../gbm-datasets -dataset football
   user@container$ exit
   $ cat ./gbm-perf/football.json
 ```
 
+## New vs Old?
+Currently, we are refactoring the benchmark logic to be easier to represent that
+datasets. (there were too many classes already in the benchmarking suite!)
+That's the reason one will find 2 sets of files. For eg: utils.py and
+new_utils.py. Files prefixed with 'new_' are the ones that are the refactored
+version of the existing files. The datasets that are currently refactored are:
+* football
+For these, one needs to use new_runme.py to launch benchmarks. And for the rest
+use the runme.py. Soon we'll move all datasets into the new approach and will
+remove this complication.
+
 # TODOs
-1. Add benchmark for Criteo dataset
-2. Figure out how to get BCI dataset
+https://yagr.nvidia.com/gradient-boosting/gbm-perf/issues
