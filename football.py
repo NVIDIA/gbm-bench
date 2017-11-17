@@ -329,7 +329,7 @@ def _prepare(infile, dbFolder):
     print("Time to prepare data: ", (time.time() - start))
     
 
-def prepare(dbFolder):
+def prepareImpl(dbFolder, test_size, shuffle):
     unzip(dbFolder, "soccer.zip", "database.sqlite")
     infile = os.path.join(dbFolder, "database.sqlite")
     featurefile = os.path.join(dbFolder, "features.pkl")
@@ -343,11 +343,15 @@ def prepare(dbFolder):
     print("Features: ", features.shape)
     print("Labels: ", labels.shape)
     X_train, X_test, y_train, y_test = train_test_split(features, labels,
-                                                        test_size=0.2,
+                                                        test_size=test_size,
+                                                        shuffle=shuffle,
                                                         random_state=42,
                                                         stratify=labels)
     print("Time to read and split data: ", (time.time() - start))
     return Data(X_train, X_test, y_train, y_test)
+
+def prepare(dbFolder):
+    return prepareImpl(dbFolder, 0.2, True)
 
 
 labels = [0, 1, 2]
