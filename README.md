@@ -165,5 +165,11 @@ benchmarks = {
 #         process of training
 ```
 
+# Adding a new library to benchmark?
+Here are the steps involved in doing so:
+* Open utils.py
+* Create a new class there which inherits from the base class Benchmark
+* Customize/Overwrite the methods as per this library's needs
+
 # TODOs
 https://yagr.nvidia.com/gradient-boosting/gbm-perf/issues
