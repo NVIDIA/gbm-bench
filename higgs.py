@@ -9,137 +9,116 @@ import os
 import time
 import sys
 
-import lightgbm as lgbm
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
-import xgboost as xgb
 
-from utils import *
+from new_utils import *
 
 
 def generate_feables(df):
-    X = df[df.columns.difference(['boson'])]
-    y = df['boson']
+    X = df[df.columns.difference(["boson"])]
+    y = df["boson"]
     return X, y
 
-
-def prepare(db_folder):
+def prepareImpl(dbFolder, test_size, shuffle):
     # reading compressed csv is supported in pandas
-    csv_name = 'HIGGS.csv.gz'
+    csv_name = "HIGGS.csv.gz"
     cols = [
-        'boson', 'lepton_pT', 'lepton_eta', 'lepton_phi', 'missing_energy_magnitude',
-        'missing_energy_phi', 'jet_1_pt', 'jet_1_eta', 'jet_1_phi', 'jet_1_b-tag',
-        'jet_2_pt', 'jet_2_eta', 'jet_2_phi', 'jet_2_b-tag', 'jet_3_pt', 'jet_3_eta',
-        'jet_3_phi', 'jet_3_b-tag', 'jet_4_pt', 'jet_4_eta', 'jet_4_phi', 'jet_4_b-tag',
-        'm_jj', 'm_jjj', 'm_lv', 'm_jlv', 'm_bb', 'm_wbb', 'm_wwbb'
+        "boson", "lepton_pT", "lepton_eta", "lepton_phi", "missing_energy_magnitude",
+        "missing_energy_phi", "jet_1_pt", "jet_1_eta", "jet_1_phi", "jet_1_b-tag",
+        "jet_2_pt", "jet_2_eta", "jet_2_phi", "jet_2_b-tag", "jet_3_pt", "jet_3_eta",
+        "jet_3_phi", "jet_3_b-tag", "jet_4_pt", "jet_4_eta", "jet_4_phi", "jet_4_b-tag",
+        "m_jj", "m_jjj", "m_lv", "m_jlv", "m_bb", "m_wbb", "m_wwbb"
     ]
-    csv_file = os.path.join(db_folder, csv_name)
+    csv_file = os.path.join(dbFolder, csv_name)
     start = time.time()
     df = pd.read_csv(csv_file, names=cols, dtype=np.float32)
     X, y = generate_feables(df)
-    X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y,
+    strati = y if shuffle else None
+    X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=strati,
                                                         random_state=77,
-                                                        test_size=500000)
+                                                        test_size=test_size,
+                                                        shuffle=shuffle)
     load_time = time.time() - start
-    print('Higgs dataset loaded in %.2fs' % load_time, file=sys.stderr)
+    print("Higgs dataset loaded in %.2fs" % load_time, file=sys.stderr)
     return Data(X_train, X_test, y_train, y_test)
 
-higgs_num_rounds = 200
+
+def prepare(dbFolder):
+    return prepareImpl(dbFolder, 500000, True)
 
 
-class XgbGpuHiggs(XgbGpuBinaryBenchmark):
-    num_rounds = higgs_num_rounds
+def metrics(y_test, y_prob):
+    return classification_metrics_binary_prob(y_test, y_prob)
+
+def catMetrics(y_test, y_prob):
+    pred = np.argmax(y_prob, axis=1)
+    return classification_metrics_binary_prob(y_test, pred)
 
 
-class LgbmGpuHiggs(LgbmGpuBinaryBenchmark):
-    num_rounds = higgs_num_rounds
+nthreads = get_number_processors()
 
-
-xgb_cpu_model = xgb.XGBClassifier(
-    max_depth=5,
-    learning_rate=0.1,
-    scale_pos_weight=2,
-    n_estimators=higgs_num_rounds,
-    gamma=0.1,
-    min_child_weight=1,
-    reg_lambda=1,
-    subsample=1,
-    nthread=get_number_processors())
-
-xgb_cpu_hist_model = xgb.XGBClassifier(
-    max_depth=0,
-    learning_rate=0.1,
-    scale_pos_weight=2,
-    n_estimators=higgs_num_rounds,
-    gamma=0.1,
-    min_child_weight=1,
-    reg_lambda=1,
-    subsample=1,
-    max_leaves=2**5,
-    grow_policy='lossguide',
-    tree_method='hist',
-    nthread=get_number_processors())
-
-lgbm_cpu_model = lgbm.LGBMClassifier(
-    num_leaves=2**5,
-    learning_rate=0.1,
-    scale_pos_weight=2,
-    n_estimators=higgs_num_rounds,
-    min_split_gain=0.1,
-    min_child_weight=1,
-    reg_lambda=1,
-    subsample=1,
-    nthread=get_number_processors())
-
-# this actually runs out of memory, and therefore not used
-xgb_gpu_params = {
-    'max_depth': 2,
-    'objective': 'binary:logistic',
-    'min_child_weight': 1,
-    'learning_rate': 0.1,
-    'scale_pos_weight': 2,
-    'gamma': 0.1,
-    'reg_lamda': 1,
-    'subsample': 1,
-    'tree_method': 'exact',
-    'updater': 'grow_gpu',
+xgb_common_params = {
+    "gamma":            0.1,
+    "learning_rate":    0.1,
+    "max_depth":        5,
+    "max_leaves":       2**5,
+    "min_child_weight": 1,
+    "num_round":        200,
+    "reg_lambda":       1,
+    "scale_pos_weight": 2,
+    "subsample":        1,
 }
 
-xgb_gpu_hist_params = {
-    'max_depth': 6,
-    'max_leaves': 2**5,
-    'objective': 'binary:logistic',
-    'min_child_weight': 1,
-    'learning_rate': 0.1,
-    'scale_pos_weight': 2,
-    'gamma': 0.1,
-    'reg_lamda': 1,
-    'subsample': 1,
-    'tree_method': 'gpu_hist',
-#    'grow_policy': 'lossguide',
+lgb_common_params = {
+    "learning_rate":    0.1,
+    "min_child_weight": 1,
+    "min_split_gain":   0.1,
+    "num_leaves":       2**5,
+    "num_round":        200,
+    "objective":        "binary",
+    "reg_lambda":       1,
+    "scale_pos_weight": 2,
+    "subsample":        1,
+    "task":             "train",
 }
 
-lgbm_gpu_params = {
-    'num_leaves': 2**5,
-    'learning_rate': 0.1,
-    'scale_pos_weight': 2,
-    'min_split_gain': 0.1,
-    'min_child_weight': 1,
-    'reg_lambda': 1,
-    'subsample': 1,
-    'objective': 'binary',
-    'device': 'gpu',
-    'task': 'train'
+cat_common_params = {
+    "depth":            5,
+    "iterations":       200,
+    "l2_leaf_reg":      0.1,
+    "learning_rate":    0.1,
+    "loss_function":    "Logloss",
 }
 
+# NOTES: some tests are disabled!
+#  . xgb-cpu takes almost an hour to train
+#  . xgb-gpu runs out of memory
+#  . lgb-gpu throws the following error
+#   [LightGBM] [Fatal] Bug in GPU histogram! split 2237769: 5377646, smaller_leaf: 2237689, larger_leaf: 5377726
+#  . cat-gpu throws the following error
+#     what() -> "catboost/cuda/cuda_lib/devices_provider.h:96: CUDA error: all CUDA-capable devices are busy or unavailable 46"
 benchmarks = {
-    # xgb-cpu takes almost an hour to train, and is therefore commented out by default
-    # 'xgb-cpu': (CpuBinaryBenchmark, xgb_cpu_model),
-    'xgb-cpu-hist': (CpuBinaryBenchmark, xgb_cpu_hist_model),
-    'lgbm-cpu':     (CpuBinaryBenchmark, lgbm_cpu_model),
-    # xgb-gpu runs out of memory
-    # 'xgb-gpu': (XgbGpuHiggs, xgb_gpu_params),
-    'xgb-gpu-hist': (XgbGpuHiggs, xgb_gpu_hist_params),
-    'lgbm-gpu':     (LgbmGpuHiggs, lgbm_gpu_params)
+    "xgb-cpu":      (False, XgbBenchmark, metrics,
+                     dict(xgb_common_params, nthread=nthreads)),
+    "xgb-cpu-hist": (True, XgbBenchmark, metrics,
+                     dict(xgb_common_params, nthread=nthreads,
+                          grow_policy="lossguide", tree_method="hist")),
+    "xgb-gpu":      (False, XgbBenchmark, metrics,
+                     dict(xgb_common_params, tree_method="gpu_exact",
+                          objective="binary:logistic")),
+    "xgb-gpu-hist": (True, XgbBenchmark, metrics,
+                     dict(xgb_common_params, tree_method="gpu_hist",
+                          objective="binary:logistic")),
+
+    "lgbm-cpu":     (True, LgbBenchmark, metrics,
+                     dict(lgb_common_params, nthread=nthreads)),
+    "lgbm-gpu":     (False, LgbBenchmark, metrics,
+                     dict(lgb_common_params, device="gpu")),
+
+    "cat-cpu":      (True, CatBenchmark, catMetrics,
+                     dict(cat_common_params, thread_count=nthreads)),
+    "cat-gpu":      (False, CatBenchmark, catMetrics,
+                     dict(cat_common_params, device_type="GPU")),
 }

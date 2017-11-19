@@ -363,7 +363,6 @@ def metrics(y_test, y_pred):
 
 
 xgb_common_params = {
-    "colsample_bytree": 1.0,
     "eval_metric":      "merror",
     "gamma":            0.1,
     "learning_rate":    0.1,
@@ -379,7 +378,6 @@ xgb_common_params = {
 }
 
 lgb_common_params = {
-    "colsample_bytree": 1.0,
     "metric":           "multi_error",
     "learning_rate":    0.1,
     "min_child_weight": 5,
@@ -404,24 +402,24 @@ cat_common_params = {
 
 
 benchmarks = {
-    "xgb-cpu":      (XgbBenchmark, metrics,
+    "xgb-cpu":      (True, XgbBenchmark, metrics,
                      dict(xgb_common_params, nthread=nthreads,
                           tree_method="exact")),
-    "xgb-cpu-hist": (XgbBenchmark, metrics,
+    "xgb-cpu-hist": (True, XgbBenchmark, metrics,
                      dict(xgb_common_params, nthread=nthreads,
                           grow_policy="lossguide", tree_method="hist")),
-    "xgb-gpu":      (XgbBenchmark, metrics,
+    "xgb-gpu":      (True, XgbBenchmark, metrics,
                      dict(xgb_common_params, tree_method="gpu_exact")),
-    "xgb-gpu-hist": (XgbBenchmark, metrics,
+    "xgb-gpu-hist": (True, XgbBenchmark, metrics,
                      dict(xgb_common_params, tree_method="gpu_hist")),
 
-    "lgbm-cpu":     (LgbBenchmark, metrics,
+    "lgbm-cpu":     (True, LgbBenchmark, metrics,
                      dict(lgb_common_params, nthread=nthreads)),
-    "lgbm-gpu":     (LgbBenchmark, metrics,
+    "lgbm-gpu":     (True, LgbBenchmark, metrics,
                      dict(lgb_common_params, device="gpu")),
 
-    "cat-cpu":      (CatBenchmark, metrics,
+    "cat-cpu":      (True, CatBenchmark, metrics,
                      dict(cat_common_params, thread_count=nthreads)),
-    "cat-gpu":      (CatBenchmark, metrics,
+    "cat-gpu":      (True, CatBenchmark, metrics,
                      dict(cat_common_params, device_type="GPU")),
 }

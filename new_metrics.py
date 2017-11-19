@@ -16,47 +16,45 @@ def evaluate_metrics(y_true, y_pred, metrics):
 def classification_metrics_binary_prob(y_true, y_prob, threshold=0.5):
     y_pred = np.where(y_prob > threshold, 1, 0)
     metrics = {
-        'Accuracy': accuracy_score,
-        'Precision': precision_score,
-        'Recall': recall_score,
-        'AUC': lambda y_true, y_pred: roc_auc_score(y_true, y_prob),
-        'F1': f1_score,
+        "Accuracy":  accuracy_score,
+        "Precision": precision_score,
+        "Recall":    recall_score,
+        # yes, I'm using y_prob here!
+        "AUC":       lambda real, pred: roc_auc_score(real, y_prob),
+        "F1":        f1_score,
     }
     return evaluate_metrics(y_true, y_pred, metrics)
 
 
 def classification_metrics_multilabel(y_true, y_pred, labels):
     metrics = {
-        'Accuracy': accuracy_score,
-        'Precision': lambda y_true, y_pred: precision_score(y_true, y_pred,
-                                                            labels,
-                                                            average='weighted'),
-        'Recall': lambda y_true, y_pred: recall_score(y_true, y_pred, labels,
-                                                      average='weighted'),
-        'F1': lambda y_true, y_pred: f1_score(y_true, y_pred, labels,
-                                              average='weighted'),
+        "Accuracy":  accuracy_score,
+        "Precision": lambda real, pred: precision_score(real, pred, labels,
+                                                        average="weighted"),
+        "Recall":    lambda real, pred: recall_score(real, pred, labels,
+                                                     average="weighted"),
+        "F1":        lambda real, pred: f1_score(real, pred, labels,
+                                                 average="weighted"),
     }
     return evaluate_metrics(y_true, y_pred, metrics)
 
 
-def classification_metrics_average(y_true, y_pred, average):
+def classification_metrics_average(y_true, y_pred, avg):
     metrics = {
-        'Accuracy': accuracy_score,
-        'Precision': lambda y_true, y_pred: precision_score(y_true, y_pred,
-                                                            average=average),
-        'Recall': lambda y_true, y_pred: recall_score(y_true, y_pred,
-                                                      average=average),
-        'F1': lambda y_true, y_pred: f1_score(y_true, y_pred, average=average),
+        "Accuracy":  accuracy_score,
+        "Precision": lambda real, pred: precision_score(real, pred, average=avg),
+        "Recall":    lambda real, pred: recall_score(real, pred, average=avg),
+        "F1":        lambda real, pred: f1_score(real, pred, average=avg),
     }
     return evaluate_metrics(y_true, y_pred, metrics)
 
 
 def classification_metrics(y_true, y_pred):
     metrics = {
-        'Accuracy': accuracy_score,
-        'Precision': precision_score,
-        'Recall': recall_score,
-        'AUC': roc_auc_score,
-        'F1': f1_score,
+        "Accuracy":  accuracy_score,
+        "Precision": precision_score,
+        "Recall":    recall_score,
+        "AUC":       roc_auc_score,
+        "F1":        f1_score,
     }
     return evaluate_metrics(y_true, y_pred, metrics)

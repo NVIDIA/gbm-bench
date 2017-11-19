@@ -129,5 +129,41 @@ For these, one needs to use new_runme.py to launch benchmarks. And for the rest
 use the runme.py. Soon we'll move all datasets into the new approach and will
 remove this complication.
 
+# Adding a new dataset?
+Here are the steps involved in doing so:
+* Assume that your dataset name is "mydataset"
+* Create a folder named mydataset inside the root folder for datasets
+* Copy the dataset file(s) in this folder
+* Now, create a file named mydataset.py inside this repo
+* Note that the name of this file is exactly the same as of the dataset!
+* Create a function whose signature is 'prepareImpl(dbFolder, testSize, shuffle)'
+  inside this file. dbFolder=the path to the above dataset folder; testSize=the
+  size of the test-set to be created during train_test_split; shuffle=whether to
+  shuffle the datapoints or not. This function should read/preprocess your
+  dataset and return the 4 arrays: X_train, X_test, y_train, y_test.
+* Create a another wrapper function with signature 'prepare(dbFolder)', this
+  function just calls prepareImpl with hard-coded values for testSize and
+  shuffle.
+* Then create a map named benchmarks in the following format:
+```python
+benchmarks = {
+    "xgb-cpu": (Enabled, BenchmarkClass, metricsFunc, params),
+    "xgb-cpu-hist": (Enabled, BenchmarkClass, metricsFunc, params),
+    "xgb-gpu": (Enabled, BenchmarkClass, metricsFunc, params),
+    "xgb-gpu-hist": (Enabled, BenchmarkClass, metricsFunc, params),
+    "lgbm-cpu": (Enabled, BenchmarkClass, metricsFunc, params),
+    "lgbm-gpu": (Enabled, BenchmarkClass, metricsFunc, params),
+    "cat-cpu": (Enabled, BenchmarkClass, metricsFunc, params),
+    "cat-gpu": (Enabled, BenchmarkClass, metricsFunc, params),
+}
+# Enabled: Whether this benchmark is enabled to be run or not
+# BenchmarkClass: Class to be used to instantiate and run the benchmark. For the
+#                 list of classes, refer to new_utils.py
+# metricsFunc: function which evaluates accuracy metrics. For the list of such
+#              functions, refer to new_metrics.py
+# params: map of params to be passed to the final library to customize the
+#         process of training
+```
+
 # TODOs
 https://yagr.nvidia.com/gradient-boosting/gbm-perf/issues
