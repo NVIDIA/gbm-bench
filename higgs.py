@@ -97,8 +97,6 @@ cat_common_params = {
 #  . xgb-gpu runs out of memory
 #  . lgb-gpu throws the following error
 #   [LightGBM] [Fatal] Bug in GPU histogram! split 2237769: 5377646, smaller_leaf: 2237689, larger_leaf: 5377726
-#  . cat-gpu throws the following error
-#     what() -> "catboost/cuda/cuda_lib/devices_provider.h:96: CUDA error: all CUDA-capable devices are busy or unavailable 46"
 benchmarks = {
     "xgb-cpu":      (False, XgbBenchmark, metrics,
                      dict(xgb_common_params, nthread=nthreads)),
@@ -119,6 +117,6 @@ benchmarks = {
 
     "cat-cpu":      (True, CatBenchmark, catMetrics,
                      dict(cat_common_params, thread_count=nthreads)),
-    "cat-gpu":      (False, CatBenchmark, catMetrics,
+    "cat-gpu":      (True, CatBenchmark, catMetrics,
                      dict(cat_common_params, device_type="GPU")),
 }
