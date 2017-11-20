@@ -9,6 +9,7 @@ import time
 
 import lightgbm as lgb
 import xgboost as xgb
+import catboost as cat
 
 from metrics import *
 
@@ -23,110 +24,89 @@ class Data:
 
 
 class Benchmark:
-    # params is either model or parameters for the model
     def __init__(self, data, params):
-        # set the data
-        self.X_train = data.X_train
-        self.X_test = data.X_test
-        self.y_train = data.y_train
-        self.y_test = data.y_test
+        self.data = data
         self.params = params
+        self.model = None
+        self.y_pred = None
 
     def run(self):
-        results = {}
-        # additional data and model preparation, if necessary
         self.prepare()
-        # training time
+        # training
         start = time.time()
         self.train()
-        results['train_time'] = time.time() - start
-        # testing time
+        train_time = time.time() - start
+        # testing
         start = time.time()
         self.test()
-        results['test_time'] = time.time() - start
-        # accuracy
-        results['accuracy'] = self.accuracy()
-        # cleanup, if necessary
+        test_time = time.time() - start
         self.cleanup()
-        return results
+        return (train_time, test_time)
 
     def prepare(self):
         pass
 
-    def cleanup(self):
+    def train(self):
         pass
 
-    
-class CpuBenchmark(Benchmark):
-    def __init__(self, data, model):
-        Benchmark.__init__(self, data, model)
-        self.model = model
-
-    def train(self):
-        self.model.fit(self.X_train, self.y_train)
-
     def test(self):
-        self.y_pred = self.model.predict(self.X_test)
-
-
-# CPU benchmark with binary classification metrics
-class CpuBinaryBenchmark(CpuBenchmark):
-    def accuracy(self):
-        return classification_metrics(self.y_test, self.y_pred)   
-
-
-class GpuBenchmark(Benchmark):
-    # number of boosting rounds
-    num_rounds = None
+        pass
 
     def cleanup(self):
-        del self.model
+        if self.model is not None:
+            del self.model
 
 
-class XgbGpuBenchmark(GpuBenchmark):
+class XgbBenchmark(Benchmark):
     def prepare(self):
-        self.dtrain = xgb.DMatrix(data=self.X_train, label=self.y_train)
-        self.dtest = xgb.DMatrix(data=self.X_test, label=self.y_test)
+        self.dtrain = xgb.DMatrix(data=self.data.X_train, label=self.data.y_train)
+        self.dtest = xgb.DMatrix(data=self.data.X_test, label=self.data.y_test)
 
     def train(self):
-        self.model = xgb.train(self.params, self.dtrain, num_boost_round=self.num_rounds)
+        self.model = xgb.train(self.params, self.dtrain)
 
     def test(self):
-        self.y_prob = self.model.predict(self.dtest)
+        self.y_pred = self.model.predict(self.dtest)
+
+    def cleanup(self):
+        del self.dtrain
+        del self.dtest
+        Benchmark.cleanup(self)
 
 
-class LgbmGpuBenchmark(GpuBenchmark):
+class LgbBenchmark(Benchmark):
     def prepare(self):
-        self.dtrain = lgb.Dataset(self.X_train, self.y_train, free_raw_data=False)
+        self.dtrain = lgb.Dataset(self.data.X_train, self.data.y_train,
+                                  free_raw_data=False)
 
     def train(self):
-        self.model = lgb.train(self.params, self.dtrain, num_boost_round=self.num_rounds)
+        self.model = lgb.train(self.params, self.dtrain)
 
     def test(self):
-        self.y_prob = self.model.predict(self.X_test)
+        self.y_pred = self.model.predict(self.data.X_test)
 
     def cleanup(self):
         self.model.free_dataset()
         del self.dtrain
-        GpuBenchmark.cleanup(self)
+        Benchmark.cleanup(self)
 
 
-# mixin for binary accuracy computation for predictions expressed as probability
-class BinaryProbMixin:
-    def accuracy(self):
-        y_pred = binarize_prediction(self.y_prob)
-        results = classification_metrics_binary(self.y_test, y_pred)
-        results2 = classification_metrics_binary_prob(self.y_test, self.y_prob)
-        results.update(results2)
-        return results
+class CatBenchmark(Benchmark):
+    def prepare(self):
+        # NOTE: HACK!!
+        # Due to some issue with CatBoostClassifier class we need to explicitly
+        # set the below params to None, or else we get exceptions!
+        params = self.params
+        params['store_all_simple_ctr'] = None
+        params['rsm'] = None
+        self.model = cat.CatBoostClassifier(**params)
 
-    
-class XgbGpuBinaryBenchmark(BinaryProbMixin, XgbGpuBenchmark):
-    pass
+    def train(self):
+        self.model.fit(self.data.X_train, self.data.y_train)
 
+    def test(self):
+        self.y_pred = self.model.predict_proba(self.data.X_test)
 
-class LgbmGpuBinaryBenchmark(BinaryProbMixin, LgbmGpuBenchmark):
-    pass
 
 # set this to override the return value of get_number_processors()
 number_processors_override = None
@@ -145,6 +125,7 @@ def print_sys_info():
     print("System  : %s" % sys.version)
     print("Xgboost : %s" % os.getenv("XG_COMMIT_ID"))
     print("LightGBM: %s" % os.getenv("LG_COMMIT_ID"))
+    print("CatBoost: %s" % os.getenv("CAT_COMMIT_ID"))
     print("#jobs   : %d" % get_number_processors())
 
 

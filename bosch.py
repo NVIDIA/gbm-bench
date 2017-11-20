@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
 
-from new_utils import *
+from utils import *
 
 
 def prepareImpl(dbFolder, testSize, shuffle):
@@ -280,7 +280,8 @@ cat_common_params = {
 # _catboost.CatboostError: catboost/libs/algo/full_features.cpp:29: There are nans in test dataset (feature number 0) but there were not nans in learn dataset
 benchmarks = {
     "xgb-cpu":      (True, XgbBenchmark, metrics,
-                     dict(xgb_common_params, nthread=nthreads)),
+                     dict(xgb_common_params, tree_method="exact",
+                          nthread=nthreads)),
     "xgb-cpu-hist": (True, XgbBenchmark, metrics,
                      dict(xgb_common_params, nthread=nthreads,
                           grow_policy="lossguide", tree_method="hist")),

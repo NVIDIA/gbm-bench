@@ -2,54 +2,59 @@
 # Source: https://github.com/Azure/fast_retraining/blob/master/experiments/05_FraudDetection.ipynb
 
 import numpy as np
-from sklearn.metrics import roc_auc_score, accuracy_score, precision_score, recall_score, f1_score
+from sklearn.metrics import roc_auc_score, accuracy_score, precision_score, \
+    recall_score, f1_score
 
 
-def classification_metrics_binary(y_true, y_pred):
-    m_acc = accuracy_score(y_true, y_pred)
-    m_f1 = f1_score(y_true, y_pred)
-    m_precision = precision_score(y_true, y_pred)
-    m_recall = recall_score(y_true, y_pred)
-    report = {'Accuracy':m_acc, 'Precision':m_precision, 'Recall':m_recall, 'F1':m_f1}
-    return report
+def evaluate_metrics(y_true, y_pred, metrics):
+    res = {}
+    for metric_name, metric in metrics.items():
+        res[metric_name] = metric(y_true, y_pred)
+    return res
 
 
-def classification_metrics_binary_prob(y_true, y_prob):
-    m_auc = roc_auc_score(y_true, y_prob)
-    report = {'AUC':m_auc}
-    return report
+def classification_metrics_binary_prob(y_true, y_prob, threshold=0.5):
+    y_pred = np.where(y_prob > threshold, 1, 0)
+    metrics = {
+        "Accuracy":  accuracy_score,
+        "Precision": precision_score,
+        "Recall":    recall_score,
+        # yes, I'm using y_prob here!
+        "AUC":       lambda real, pred: roc_auc_score(real, y_prob),
+        "F1":        f1_score,
+    }
+    return evaluate_metrics(y_true, y_pred, metrics)
 
 
 def classification_metrics_multilabel(y_true, y_pred, labels):
-    m_acc = accuracy_score(y_true, y_pred)
-    m_f1 = f1_score(y_true, y_pred, labels, average='weighted')
-    m_precision = precision_score(y_true, y_pred, labels, average='weighted')
-    m_recall = recall_score(y_true, y_pred, labels, average='weighted')
-    report = {'Accuracy':m_acc, 'Precision':m_precision, 'Recall':m_recall, 'F1':m_f1}
-    return report
-
-
-def classification_metrics_average(y_true, y_pred, average):
     metrics = {
-        'Accuracy': accuracy_score,
-        'Precision': lambda y_true, y_pred: precision_score(y_true, y_pred, average=average),
-        'Recall': lambda y_true, y_pred: recall_score(y_true, y_pred, average=average),
-        'F1': lambda y_true, y_pred: f1_score(y_true, y_pred, average=average),
+        "Accuracy":  accuracy_score,
+        "Precision": lambda real, pred: precision_score(real, pred, labels,
+                                                        average="weighted"),
+        "Recall":    lambda real, pred: recall_score(real, pred, labels,
+                                                     average="weighted"),
+        "F1":        lambda real, pred: f1_score(real, pred, labels,
+                                                 average="weighted"),
     }
-    return {metric_name:metric(y_true, y_pred) for metric_name, metric in metrics.items()}    
+    return evaluate_metrics(y_true, y_pred, metrics)
+
+
+def classification_metrics_average(y_true, y_pred, avg):
+    metrics = {
+        "Accuracy":  accuracy_score,
+        "Precision": lambda real, pred: precision_score(real, pred, average=avg),
+        "Recall":    lambda real, pred: recall_score(real, pred, average=avg),
+        "F1":        lambda real, pred: f1_score(real, pred, average=avg),
+    }
+    return evaluate_metrics(y_true, y_pred, metrics)
 
 
 def classification_metrics(y_true, y_pred):
     metrics = {
-        'Accuracy': accuracy_score,
-        'Precision': precision_score,
-        'Recall': recall_score,
-        'AUC': roc_auc_score,
-        'F1': f1_score,
+        "Accuracy":  accuracy_score,
+        "Precision": precision_score,
+        "Recall":    recall_score,
+        "AUC":       roc_auc_score,
+        "F1":        f1_score,
     }
-    return {metric_name:metric(y_true, y_pred) for metric_name, metric in metrics.items()}
-
-
-def binarize_prediction(y, threshold=0.5):
-    y_pred = np.where(y > threshold, 1, 0)
-    return y_pred
+    return evaluate_metrics(y_true, y_pred, metrics)

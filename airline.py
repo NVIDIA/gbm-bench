@@ -13,8 +13,8 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 
 from conversion import *
-from new_metrics import *
-from new_utils import *
+from metrics import *
+from utils import *
 
 
 def generate_feables(df):
@@ -109,7 +109,8 @@ cat_common_params = {
 
 benchmarks = {
     "xgb-cpu":      (True, XgbBenchmark, metrics,
-                     dict(xgb_common_params, nthread=nthreads)),
+                     dict(xgb_common_params, tree_method="exact",
+                          nthread=nthreads)),
     "xgb-cpu-hist": (True, XgbBenchmark, metrics,
                      dict(xgb_common_params, nthread=nthreads,
                           grow_policy="lossguide", tree_method="hist")),

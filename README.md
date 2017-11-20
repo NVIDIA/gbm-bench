@@ -106,10 +106,18 @@ $ wget http://www.cse.fau.edu/~xqzhu/Stream/sensor.arff
 Planet-Kaggle competition, as found here:
 https://www.kaggle.com/c/planet-understanding-the-amazon-from-space/data.
 Download the 'train_v2.csv.zip' from this page into a directory named 'planet'.
+Also download the 'train-jpg.tar.7z' from this page into the same directory.
+Then extract the 7z file as follows:
+```bash
+$ 7z e train-jpg.tar.7z
+```
 
-# Running benchmarks
-This assumes that one has elevated permissions on the system where this docker
-image will be run for benchmarking!
+# Benchmarking
+This section assumes that one has elevated permissions on the system where this
+docker image will be run for benchmarking! In case this is not true, update
+your flow accordingly.
+
+## Running a benchmark
 ```bash
   $ ./dockerfiles/scripts/launch -user gbm:latest /bin/bash
   user@container$ cd /work/gbm-perf
@@ -118,16 +126,12 @@ image will be run for benchmarking!
   $ cat ./gbm-perf/football.json
 ```
 
-## New vs Old?
-Currently, we are refactoring the benchmark logic to be easier to represent that
-datasets. (there were too many classes already in the benchmarking suite!)
-That's the reason one will find 2 sets of files. For eg: utils.py and
-new_utils.py. Files prefixed with 'new_' are the ones that are the refactored
-version of the existing files. The datasets that are currently refactored are:
-* football
-For these, one needs to use new_runme.py to launch benchmarks. And for the rest
-use the runme.py. Soon we'll move all datasets into the new approach and will
-remove this complication.
+## Running all benchmarks
+```bash
+  $ ./dockerfiles/scripts/launch -user gbm:latest /bin/bash
+  user@container$ cd /work
+  user@container$ make -f ./gbm-perf runAll
+```
 
 # Adding a new dataset?
 Here are the steps involved in doing so:
@@ -158,9 +162,9 @@ benchmarks = {
 }
 # Enabled: Whether this benchmark is enabled to be run or not
 # BenchmarkClass: Class to be used to instantiate and run the benchmark. For the
-#                 list of classes, refer to new_utils.py
+#                 list of classes, refer to utils.py
 # metricsFunc: function which evaluates accuracy metrics. For the list of such
-#              functions, refer to new_metrics.py
+#              functions, refer to metrics.py
 # params: map of params to be passed to the final library to customize the
 #         process of training
 ```

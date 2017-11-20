@@ -15,8 +15,8 @@ from sklearn.model_selection import train_test_split
 import time
 
 from conversion import convert_cols_categorical_to_numeric
-from new_metrics import classification_metrics_multilabel
-from new_utils import *
+from metrics import classification_metrics_multilabel
+from utils import *
 
 
 def get_fifa_stats(match, player_stats):
@@ -403,8 +403,8 @@ cat_common_params = {
 
 benchmarks = {
     "xgb-cpu":      (True, XgbBenchmark, metrics,
-                     dict(xgb_common_params, nthread=nthreads,
-                          tree_method="exact")),
+                     dict(xgb_common_params, tree_method="exact",
+                          nthread=nthreads)),
     "xgb-cpu-hist": (True, XgbBenchmark, metrics,
                      dict(xgb_common_params, nthread=nthreads,
                           grow_policy="lossguide", tree_method="hist")),

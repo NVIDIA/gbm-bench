@@ -8,7 +8,7 @@ import warnings
 
 def parseArgs():
     parser = argparse.ArgumentParser(
-        description="Benchmark xgboost/lightgbm on real datasets")
+        description="Benchmark xgboost/lightgbm/catboost on real datasets")
     parser.add_argument("-dataset", default="football", type=str,
                         help="The dataset to be used for benchmarking")
     parser.add_argument("-root", default="/datasets",
@@ -27,26 +27,34 @@ def parseArgs():
 
 # benchmarks a single dataset
 def benchmark(dbFolder, module, benchmarks, extra_params):
-    warnings.filterwarnings('ignore')
+    warnings.filterwarnings("ignore")
     data = module.prepare(dbFolder)
     funcs = module.benchmarks
     results = {}
-    # 'all' runs all benchmarks
-    if benchmarks[0] == 'all':
+    # "all" runs all benchmarks
+    if benchmarks[0] == "all":
         benchmarks = funcs.keys()
     for name in benchmarks:
-        cls, params = funcs[name]
-        # add extra parameters for params-based benchmarks
-        if type(params) is dict:
-            for (extra_key, extra_value) in extra_params.items():
-                # only set n_gpus for xgboost,
-                # as LightGBM does not support it
-                # this currently only affects xgb-gpu-hist benchmarks
-                if extra_key == 'n_gpus' and 'xgb' not in name:
-                    continue
-                params[extra_key] = extra_value
+        enabled, cls, metrics, params = funcs[name]
+        if not enabled:
+            print("Skipping '%s'... " % name)
+            continue
+        # add extra parameters for benchmarks (if present)
+        for (extra_key, extra_value) in extra_params.items():
+            # only set n_gpus for xgboost,
+            # as LightGBM/CatBoost do not support it
+            # this currently only affects xgb-gpu-hist benchmarks
+            if extra_key == "n_gpus" and "xgb" not in name:
+                continue
+            params[extra_key] = extra_value
         print("Running '%s' ..." % name)
-        results[name] = cls(data, params).run()
+        runner = cls(data, params)
+        (train_time, test_time) = runner.run()
+        results[name] = {
+            "train_time": train_time,
+            "test_time":  test_time,
+            "accuracy":   metrics(runner.data.y_test, runner.y_pred),
+        }
     return results
 
 def main():
@@ -55,18 +63,16 @@ def main():
         utils.number_processors_override = args.ncpus
     utils.print_sys_info()
     folder = os.path.join(args.root, args.dataset)
-    benchmarks = args.benchmarks.split(',')
-    
+    benchmarks = args.benchmarks.split(",")
     # TODO: this is a HACK to support dynamic loading of modules at runtime!
     module = __import__(args.dataset)
-    extra_params = {'n_gpus': args.ngpus}
+    extra_params = {"n_gpus": args.ngpus}
     results = benchmark(folder, module, benchmarks, extra_params)
     output = json.dumps(results, indent=2, sort_keys=True)
     print(output)
     fp = open("%s.json" % args.dataset, "w")
     fp.write(output + "\n")
     fp.close()
-    return
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
