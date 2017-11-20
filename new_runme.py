@@ -60,8 +60,8 @@ def benchmark(dbFolder, module, benchmarks, extra_params):
 def main():
     args = parseArgs()
     if args.ncpus > 0:
-        utils.number_processors_override = args.ncpus
-    utils.print_sys_info()
+        new_utils.number_processors_override = args.ncpus
+    new_utils.print_sys_info()
     folder = os.path.join(args.root, args.dataset)
     benchmarks = args.benchmarks.split(",")
     # TODO: this is a HACK to support dynamic loading of modules at runtime!
