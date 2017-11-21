@@ -102,6 +102,17 @@ $ cd iot
 $ wget http://www.cse.fau.edu/~xqzhu/Stream/sensor.arff
 ```
 
+## MS LTR
+Microsoft's Learning to Rate query-url dataset. Download the 'MSLR-WEB10K.zip'
+from the following link: https://www.microsoft.com/en-us/research/project/mslr.
+Save this into a directory named 'msltr'.
+
+## MS LTR Full
+Full version of the Microsoft's Learning to Rate query-url dataset.
+Download the 'MSLR-WEB30K.zip' from the following link:
+https://www.microsoft.com/en-us/research/project/mslr. Save this into a
+directory named 'msltr_full'.
+
 ## Planet: Understanding the Amazon from Space
 Planet-Kaggle competition, as found here:
 https://www.kaggle.com/c/planet-understanding-the-amazon-from-space/data.
@@ -176,4 +187,10 @@ Here are the steps involved in doing so:
 * Customize/Overwrite the methods as per this library's needs
 
 # TODOs
-https://yagr.nvidia.com/gradient-boosting/gbm-perf/issues
+TBD!
+
+# Yet another boosting tree benchmark?!
+* This is more scriptable version (eg: for automated benchmarking)
+* Also adds CatBoost to the comparison list
+* Tries to keep the boosting hyper-params the same across frameworks for comparison
+* Supports multi-GPU benchmarking (assuming underlying framework allows)

@@ -268,6 +268,12 @@ cat_common_params = {
     "postprocess":      catLabels,
 }
 
+
+# NOTE:
+#  . cat-gpu  seems to throw the following warnings:
+# Warning: borders ctr aren't supported for target Logloss. Change type for buckets
+#  . lgbm-*   seems to throw the following warnings:
+# [LightGBM] [Warning] No further splits with positive gain, best gain: -inf
 benchmarks = {
     "xgb-cpu":      (True, PlanetBenchmark, metrics,
                      dict(xgb_common_params, tree_method="exact",

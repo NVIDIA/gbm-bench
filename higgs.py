@@ -41,7 +41,7 @@ def prepareImpl(dbFolder, test_size, shuffle):
                                                         test_size=test_size,
                                                         shuffle=shuffle)
     load_time = time.time() - start
-    print("Higgs dataset loaded in %.2fs" % load_time, file=sys.stderr)
+    print("Higgs dataset loaded in %.2fs" % load_time)
     return Data(X_train, X_test, y_train, y_test)
 
 

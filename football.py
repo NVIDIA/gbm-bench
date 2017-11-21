@@ -378,8 +378,8 @@ xgb_common_params = {
 }
 
 lgb_common_params = {
-    "metric":           "multi_error",
     "learning_rate":    0.1,
+    "metric":           "multi_error",
     "min_child_weight": 5,
     "min_split_gain":   0.1,
     "num_leaves":       2**3,
