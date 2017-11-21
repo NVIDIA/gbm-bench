@@ -16,7 +16,7 @@ datasets used here are the same as in the above repo.
 
   # this project
   $ cd ../..
-  $ git clone https://github.com/teju85/gbm-perf   ## TODO!
+  $ git clone https://github.com/teju85/gbm-bench   ## TODO!
 
   $ cd ..
   # Download the datasets as described in the next section.
@@ -131,17 +131,17 @@ your flow accordingly.
 ## Running a benchmark
 ```bash
   $ ./dockerfiles/scripts/launch -user gbm:latest /bin/bash
-  user@container$ cd /work/gbm-perf
+  user@container$ cd /work/gbm-bench
   user@container$ ./runme.py -root ../gbm-datasets -dataset football
   user@container$ exit
-  $ cat ./gbm-perf/football.json
+  $ cat ./gbm-bench/football.json
 ```
 
 ## Running all benchmarks
 ```bash
   $ ./dockerfiles/scripts/launch -user gbm:latest /bin/bash
   user@container$ cd /work
-  user@container$ make -f ./gbm-perf runAll
+  user@container$ make -f ./gbm-bench runAll
 ```
 
 # Adding a new dataset?
