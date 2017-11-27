@@ -137,12 +137,17 @@ your flow accordingly.
   $ cat ./gbm-bench/football.json
 ```
 
-## Running all benchmarks
+## Running all benchmarks and comparing results
 ```bash
   $ ./dockerfiles/scripts/launch -user gbm:latest /bin/bash
   user@container$ cd /work
   user@container$ make -f ./gbm-bench runAll
+  user@container$ ./gbm-bench/info.sh   # to get machine-info
+  user@container$ ./gbm-bench/json2csv.py *.json > benchmark.csv
 ```
+* Clone from one of the existing sheets in benchmark.xlsx
+* Copy the final perf.csv over to this new sheet
+* Add any extra analytics as per your needs
 
 # Adding a new dataset?
 Here are the steps involved in doing so:
