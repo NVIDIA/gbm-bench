@@ -241,6 +241,7 @@ def catMetrics(y_test, y_prob):
 
 
 nthreads = get_number_processors()
+nTrees = 150
 
 xgb_common_params = {
     "gamma":            0.1,
@@ -248,7 +249,7 @@ xgb_common_params = {
     "max_depth":        6,
     "max_leaves":       2**6,
     "min_child_weight": 1,
-    "num_round":        300,
+    "num_round":        nTrees,
     "reg_lambda":       1,
     "scale_pos_weight": 2,
     "subsample":        1,
@@ -259,7 +260,7 @@ lgb_common_params = {
     "min_child_weight": 1,
     "min_split_gain":   0.1,
     "num_leaves":       2**6,
-    "num_round":        300,
+    "num_round":        nTrees,
     "objective":        "binary",
     "reg_lambda":       1,
     "scale_pos_weight": 2,
@@ -269,7 +270,7 @@ lgb_common_params = {
 
 cat_common_params = {
     "depth":            6,
-    "iterations":       300,
+    "iterations":       nTrees,
     "l2_leaf_reg":      0.1,
     "learning_rate":    0.1,
     "loss_function":    "Logloss",
@@ -278,6 +279,8 @@ cat_common_params = {
 # NOTES: some tests are disabled!
 #  . cat-gpu throws the following error:
 # _catboost.CatboostError: catboost/libs/algo/full_features.cpp:29: There are nans in test dataset (feature number 0) but there were not nans in learn dataset
+#  . xgb-gpu  encounters illegal memory access
+# [16:16:33] /xgboost/dmlc-core/include/dmlc/./logging.h:300: [16:16:33] /xgboost/src/tree/updater_gpu.cu:528: GPU plugin exception: /xgboost/src/tree/../common/device_helpers.cuh(319): an illegal memory access was encountered
 benchmarks = {
     "xgb-cpu":      (True, XgbBenchmark, metrics,
                      dict(xgb_common_params, tree_method="exact",
@@ -285,7 +288,7 @@ benchmarks = {
     "xgb-cpu-hist": (True, XgbBenchmark, metrics,
                      dict(xgb_common_params, nthread=nthreads,
                           grow_policy="lossguide", tree_method="hist")),
-    "xgb-gpu":      (True, XgbBenchmark, metrics,
+    "xgb-gpu":      (False, XgbBenchmark, metrics,
                      dict(xgb_common_params, tree_method="gpu_exact",
                           objective="binary:logistic")),
     "xgb-gpu-hist": (True, XgbBenchmark, metrics,

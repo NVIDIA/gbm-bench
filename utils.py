@@ -63,7 +63,7 @@ class XgbBenchmark(Benchmark):
         self.dtest = xgb.DMatrix(data=self.data.X_test, label=self.data.y_test)
 
     def train(self):
-        self.model = xgb.train(self.params, self.dtrain)
+        self.model = xgb.train(self.params, self.dtrain, self.params['num_round'])
 
     def test(self):
         self.y_pred = self.model.predict(self.dtest)

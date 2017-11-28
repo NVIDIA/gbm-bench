@@ -183,6 +183,7 @@ def prepare(dbFolder):
     return Data(X_train, X_test, y_train, y_test)
 
 nthreads = get_number_processors()
+nTrees = 50
 
 def metrics(y_test, y_prob):
     y_pred = y_prob > 0.1
@@ -236,7 +237,7 @@ xgb_common_params = {
     "max_depth":        6,
     "max_leaves":       2**6,
     "min_child_weight": 1,
-    "num_round":        50,
+    "num_round":        nTrees,
     "objective":        "binary:logistic",
     "reg_lambda":       1,
     "scale_pos_weight": 2,
@@ -249,7 +250,7 @@ lgb_common_params = {
     "min_child_weight": 1,
     "min_split_gain":   0.1,
     "num_leaves":       2**6,
-    "num_round":        50,
+    "num_round":        nTrees,
     "objective":        "binary",
     "reg_lambda":       1,
     "scale_pos_weight": 2,
@@ -260,7 +261,7 @@ lgb_common_params = {
 
 cat_common_params = {
     "depth":            6,
-    "iterations":       50,
+    "iterations":       nTrees,
     "l2_leaf_reg":      0.1,
     "learning_rate":    0.1,
     "loss_function":    "Logloss",
@@ -269,11 +270,6 @@ cat_common_params = {
 }
 
 
-# NOTE:
-#  . cat-gpu  seems to throw the following warnings:
-# Warning: borders ctr aren't supported for target Logloss. Change type for buckets
-#  . lgbm-*   seems to throw the following warnings:
-# [LightGBM] [Warning] No further splits with positive gain, best gain: -inf
 benchmarks = {
     "xgb-cpu":      (True, PlanetBenchmark, metrics,
                      dict(xgb_common_params, tree_method="exact",

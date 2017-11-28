@@ -58,6 +58,7 @@ def catMetrics(y_test, y_prob):
 
 
 nthreads = get_number_processors()
+nTrees = 100
 
 xgb_common_params = {
     "gamma":            0.1,
@@ -65,7 +66,7 @@ xgb_common_params = {
     "max_depth":        5,
     "max_leaves":       2**5,
     "min_child_weight": 1,
-    "num_round":        200,
+    "num_round":        nTrees,
     "reg_lambda":       1,
     "scale_pos_weight": 2,
     "subsample":        1,
@@ -76,7 +77,7 @@ lgb_common_params = {
     "min_child_weight": 1,
     "min_split_gain":   0.1,
     "num_leaves":       2**5,
-    "num_round":        200,
+    "num_round":        nTrees,
     "objective":        "binary",
     "reg_lambda":       1,
     "scale_pos_weight": 2,
@@ -86,7 +87,7 @@ lgb_common_params = {
 
 cat_common_params = {
     "depth":            5,
-    "iterations":       200,
+    "iterations":       nTrees,
     "l2_leaf_reg":      0.1,
     "learning_rate":    0.1,
     "loss_function":    "Logloss",

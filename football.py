@@ -356,6 +356,7 @@ def prepare(dbFolder):
 
 labels = [0, 1, 2]
 nthreads = get_number_processors()
+nTrees = 150
 
 def metrics(y_test, y_pred):
     pred_class = np.argmax(y_pred, axis=1)
@@ -370,7 +371,7 @@ xgb_common_params = {
     "max_depth":        3,
     "max_leaves":       2**3,
     "num_class":        len(labels),
-    "num_round":        300,
+    "num_round":        nTrees,
     "objective":        "multi:softprob",
     "reg_lambda":       1,
     "subsample":        1,
@@ -383,7 +384,7 @@ lgb_common_params = {
     "min_child_weight": 5,
     "min_split_gain":   0.1,
     "num_leaves":       2**3,
-    "num_round":        300,
+    "num_round":        nTrees,
     "num_class":        len(labels),
     "objective":        "multiclass",
     "reg_lambda":       1,
@@ -394,7 +395,7 @@ lgb_common_params = {
 
 cat_common_params = {
     "depth":            3,
-    "iterations":       300,
+    "iterations":       nTrees,
     "l2_leaf_reg":      0.1,
     "learning_rate":    0.1,
     "loss_function":    "Logloss",
