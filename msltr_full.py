@@ -30,5 +30,5 @@ benchmarks = {
     "cat-cpu":      (True, CatBenchmark, msltr.metrics,
                      dict(msltr.cat_common_params, thread_count=msltr.nthreads)),
     "cat-gpu":      (True, CatBenchmark, msltr.metrics,
-                     dict(msltr.cat_common_params, device_type="GPU")),
+                     dict(msltr.cat_common_params, task_type="GPU")),
 }

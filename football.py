@@ -422,5 +422,5 @@ benchmarks = {
     "cat-cpu":      (True, CatBenchmark, metrics,
                      dict(cat_common_params, thread_count=nthreads)),
     "cat-gpu":      (True, CatBenchmark, metrics,
-                     dict(cat_common_params, device_type="GPU")),
+                     dict(cat_common_params, task_type="GPU")),
 }
