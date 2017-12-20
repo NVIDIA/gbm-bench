@@ -41,7 +41,7 @@ def addExtraParams(params, extraParams, bName):
     # multi gpu case
     if "n_gpus" in extraParams:
         if "xgb" in bName:
-            params[extra_key] = extra_value
+            params["n_gpus"] = extraParams["n_gpus"]
         else:
             print("'n_gpus' currently only applies to 'xgboost'")
     # if need to customize tree depth
