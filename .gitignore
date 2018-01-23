@@ -1,1 +1,7 @@
 *.pyc
+*.tsv
+*.json
+*.csv
+*.log
+test/
+train/

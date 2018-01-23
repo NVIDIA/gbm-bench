@@ -8,8 +8,9 @@ def prepare(dbFolder):
     return msltr.load_full(dbFolder, "MSLR-WEB30K.zip")
 
 
-# NOTE: some tests are disabled!
+# NOTE: some benchmarks are disabled!
 #  . xgb-gpu  out of memory
+#  . cat-gpu  currently segfaults
 benchmarks = {
     "xgb-cpu":      (True, XgbBenchmark, msltr.metrics,
                      dict(msltr.xgb_common_params, tree_method="exact",
@@ -29,6 +30,6 @@ benchmarks = {
 
     "cat-cpu":      (True, CatBenchmark, msltr.metrics,
                      dict(msltr.cat_common_params, thread_count=msltr.nthreads)),
-    "cat-gpu":      (True, CatBenchmark, msltr.metrics,
+    "cat-gpu":      (False, CatBenchmark, msltr.metrics,
                      dict(msltr.cat_common_params, task_type="GPU")),
 }

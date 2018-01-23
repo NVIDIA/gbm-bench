@@ -198,3 +198,11 @@ TBD!
 * Tries to keep the boosting hyper-params the same across frameworks for a fair
   comparison
 * Supports multi-GPU benchmarking (assuming underlying framework allows)
+
+# Third party codes and licensing
+The third party codes which we borrowed from, and their license texts, are released
+"as-received" under the folder named "3rdparty". Refer to 3rdparty/README.md as to
+when they are borrowed and their respective licenses.
+
+# License for this project
+This project is released under BSD License. Refer to LICENSE for more details.

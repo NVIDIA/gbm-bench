@@ -402,6 +402,8 @@ cat_common_params = {
 }
 
 
+# NOTES: some benchmarks are disabled!
+#  . cat-gpu  currently segfaults
 benchmarks = {
     "xgb-cpu":      (True, XgbBenchmark, metrics,
                      dict(xgb_common_params, tree_method="exact",
@@ -421,6 +423,6 @@ benchmarks = {
 
     "cat-cpu":      (True, CatBenchmark, metrics,
                      dict(cat_common_params, thread_count=nthreads)),
-    "cat-gpu":      (True, CatBenchmark, metrics,
+    "cat-gpu":      (False, CatBenchmark, metrics,
                      dict(cat_common_params, task_type="GPU")),
 }

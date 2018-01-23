@@ -99,6 +99,10 @@ class CatBenchmark(Benchmark):
         params = self.params
         params['store_all_simple_ctr'] = None
         params['rsm'] = None
+        # CB_THREAD_LIMIT is set to 56 in catboost source!
+        if 'thread_count' in params and params['thread_count'] > 56:
+            print("Warning! catboost sets max-thread-count to 56!")
+            params['thread_count'] = 56
         self.model = cat.CatBoostClassifier(**params)
 
     def train(self):

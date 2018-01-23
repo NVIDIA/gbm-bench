@@ -270,6 +270,8 @@ cat_common_params = {
 }
 
 
+# NOTES: some benchmarks are disabled!
+#  . cat-gpu  currently segfaults
 benchmarks = {
     "xgb-cpu":      (True, PlanetBenchmark, metrics,
                      dict(xgb_common_params, tree_method="exact",
@@ -289,6 +291,6 @@ benchmarks = {
 
     "cat-cpu":      (True, PlanetBenchmark, metrics,
                      dict(cat_common_params, thread_count=nthreads)),
-    "cat-gpu":      (True, PlanetBenchmark, metrics,
+    "cat-gpu":      (False, PlanetBenchmark, metrics,
                      dict(cat_common_params, task_type="GPU")),
 }
