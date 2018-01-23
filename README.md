@@ -12,7 +12,7 @@ datasets used here are the same as in the above repo.
   # dockerfiles github project is needed to build the docker image
   $ git clone https://github.com/teju85/dockerfiles
   $ cd dockerfiles/ubuntu1604
-  $ make gbm
+  $ make gbm80
 
   # this project
   $ cd ../..
@@ -140,14 +140,12 @@ your flow accordingly.
 ## Running all benchmarks and comparing results
 ```bash
   $ ./dockerfiles/scripts/launch -user gbm:latest /bin/bash
-  user@container$ cd /work
-  user@container$ make -f ./gbm-bench runAll
+  user@container$ cd /work/gbm-bench
+  # This generates a benchmark_5_100.csv containing runtime/perf numbers
+  # This also logs all the output inside output_5_100.log
+  user@container$ make MAXDEPTH=5 NTREES=100 runAll
   user@container$ ./gbm-bench/info.sh   # to get machine-info
-  user@container$ ./gbm-bench/json2csv.py *.json > benchmark.csv
 ```
-* Clone from one of the existing sheets in benchmark.xlsx
-* Copy the final perf.csv over to this new sheet
-* Add any extra analytics as per your needs
 
 # Adding a new dataset?
 Here are the steps involved in doing so:
@@ -156,7 +154,7 @@ Here are the steps involved in doing so:
 * Copy the dataset file(s) in this folder
 * Now, create a file named mydataset.py inside this repo
 * Note that the name of this file is exactly the same as of the dataset!
-* Create a function whose signature is 'prepareImpl(dbFolder, testSize, shuffle)'
+* Create a function with signature 'prepareImpl(dbFolder, testSize, shuffle)'
   inside this file. dbFolder=the path to the above dataset folder; testSize=the
   size of the test-set to be created during train_test_split; shuffle=whether to
   shuffle the datapoints or not. This function should read/preprocess your
@@ -194,8 +192,9 @@ Here are the steps involved in doing so:
 # TODOs
 TBD!
 
-# Yet another boosting tree benchmark?!
+# Yet another boosting tree benchmark?
 * This is more scriptable version (eg: for automated benchmarking)
 * Also adds CatBoost to the comparison list
-* Tries to keep the boosting hyper-params the same across frameworks for comparison
+* Tries to keep the boosting hyper-params the same across frameworks for a fair
+  comparison
 * Supports multi-GPU benchmarking (assuming underlying framework allows)
