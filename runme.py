@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import ast
 import os
 import sys
 import argparse
@@ -30,6 +31,8 @@ def parseArgs():
     parser.add_argument("-ntrees", default=None, type=int,
                         help=("Number of trees. Default is as specified in "
                               "the respective dataset configuration"))
+    parser.add_argument("-extra", default='{}',
+                        help="Extra arguments as a python dictionary")
     args = parser.parse_args()
     # default value for output json file
     if not args.output:
@@ -59,6 +62,9 @@ def addExtraParams(params, extraParams, bName):
             params["num_round"] = extraParams["ntrees"]
         elif "cat" in bName:
             params["iterations"] = extraParams["ntrees"]
+    # if need to pass other parameters directly to the benchmark
+    if "extra" in extraParams:
+        params.update(extraParams["extra"])
     return
 
 # benchmarks a single dataset
@@ -100,6 +106,7 @@ def main():
         extra_params["maxdepth"] = args.maxdepth
     if args.ntrees is not None:
         extra_params["ntrees"] = args.ntrees
+    extra_params["extra"] = ast.literal_eval(args.extra)
     results = benchmark(folder, module, benchmarks, extra_params)
     output = json.dumps(results, indent=2, sort_keys=True)
     print(output)
