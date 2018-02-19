@@ -6,10 +6,6 @@ import string
 import os
 import csv
 
-Datasets = ["airline", "bosch", "football", "fraud", "higgs", "msltr",
-            "msltr_full", "planet"]
-Algos = ["cat-cpu", "cat-gpu", "lgbm-cpu", "lgbm-gpu", "xgb-cpu", "xgb-gpu",
-         "xgb-cpu-hist", "xgb-gpu-hist"]
 Timings = ["train_time", "test_time"]
 Metrics = ["AUC", "Accuracy", "F1", "Precision", "Recall"]
 AllMetrics = Timings + Metrics
@@ -28,16 +24,26 @@ def loadAllPerfData(files):
         data[dataset] = loadPerfData(jsonFile)
     return data
 
+def getAllDatasets(data):
+    return data.keys()
+
+def getAllAlgos(data):
+    algos = {}
+    for dset in data.keys():
+        for algo in data[dset].keys():
+            algos[algo] = 1
+    return algos.keys()
+
 def readFromDict(hashmap, key, defVal="-na-"):
     d = hashmap[key] if key in hashmap else defVal
     return d
 
-def combinePerfData(data):
+def combinePerfData(data, datasets, algos):
     allData = {}
-    for dataset in Datasets:
+    for dataset in datasets:
         out = []
         dset = readFromDict(data, dataset, {})
-        for algo in Algos:
+        for algo in algos:
             algoData = readFromDict(dset, algo, {})
             perf = [algo]
             for timing in Timings:
@@ -49,9 +55,9 @@ def combinePerfData(data):
         allData[dataset] = out
     return allData
 
-def writeCsv(allData):
+def writeCsv(allData, datasets):
     writer = csv.writer(sys.stdout)
-    for dataset in Datasets:
+    for dataset in datasets:
         header = [dataset] + AllMetrics
         writer.writerow(header)
         for row in allData[dataset]:
@@ -60,8 +66,10 @@ def writeCsv(allData):
 
 def main():
     data = loadAllPerfData(sys.argv[1:])
-    table = combinePerfData(data)
-    writeCsv(table)
+    datasets = getAllDatasets(data)
+    algos = getAllAlgos(data)
+    table = combinePerfData(data, datasets, algos)
+    writeCsv(table, datasets)
     return
 
 if __name__ == '__main__':
