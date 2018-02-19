@@ -45,6 +45,10 @@ $ cd airline
 $ wget http://kt.ijs.si/elena_ikonomovska/datasets/airline/airline_14col.data.bz2
 ```
 
+## Airline (Extended)
+Extended version of airline dataset with a total of 165543376 rows.
+TBD - More info on downloading this dataset!
+
 ## Allstate
 This is the dataset in the Kaggle-AllState claim prediction challenge. Link for
 the dataset is here: https://www.kaggle.com/c/ClaimPredictionChallenge/data

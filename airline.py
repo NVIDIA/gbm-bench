@@ -22,8 +22,7 @@ def generate_feables(df):
     y = df["ArrDelayBinary"]
     return X,y
 
-
-def prepareImpl(dbFolder, testSize, shuffle):
+def prepareImplCommon(dbFolder, testSize, shuffle, datasetFileName, numRows):
     cols = [
         "Year", "Month", "DayofMonth", "DayofWeek", "CRSDepTime",
         "CRSArrTime", "UniqueCarrier", "FlightNum", "ActualElapsedTime",
@@ -39,8 +38,8 @@ def prepareImpl(dbFolder, testSize, shuffle):
         "Diverted": dtype, "ArrDelay": dtype,
     }
     start = time.time()
-    df1 =  pd.read_csv(os.path.join(dbFolder, "airline_14col.data.bz2"),
-                       names=cols, dtype=dtype_columns, nrows=2e7)
+    df1 =  pd.read_csv(os.path.join(dbFolder, datasetFileName),
+                       names=cols, dtype=dtype_columns, nrows=numRows)
     df2 = convert_related_cols_categorical_to_numeric(df1, col_list=["Origin","Dest"])
     del df1
     df3 = convert_cols_categorical_to_numeric(df2, col_list="UniqueCarrier")
@@ -57,6 +56,10 @@ def prepareImpl(dbFolder, testSize, shuffle):
     load_time = time.time() - start
     print("Airline dataset loaded in %.2fs" % load_time, file=sys.stderr)    
     return Data(X_train, X_test, y_train, y_test)
+
+def prepareImpl(dbFolder, testSize, shuffle):
+    return prepareImplCommon(dbFolder, testSize, shuffle,
+                             "airline_14col.data.bz2", 2e7)
 
 def prepare(dbFolder):
     return prepareImpl(dbFolder, 0.2, True)
