@@ -57,7 +57,7 @@ def combinePerfData(data, datasets, algos):
 
 def writeCsv(allData, datasets):
     writer = csv.writer(sys.stdout)
-    for dataset in datasets:
+    for dataset in sorted(datasets):
         header = [dataset] + AllMetrics
         writer.writerow(header)
         for row in allData[dataset]:
