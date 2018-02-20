@@ -124,10 +124,10 @@ benchmarks = {
                           grow_policy="lossguide", tree_method="hist")),
     "xgb-gpu":      (False, XgbBenchmark, metrics,
                      dict(xgb_common_params, tree_method="gpu_exact",
-                          objective="binary:logistic")),
+                          objective="gpu:binary:logistic")),
     "xgb-gpu-hist": (True, XgbBenchmark, metrics,
                      dict(xgb_common_params, tree_method="gpu_hist",
-                          objective="binary:logistic")),
+                          objective="gpu:binary:logistic")),
 
     "lgbm-cpu":     (True, LgbBenchmark, metrics,
                      dict(lgb_common_params, nthread=nthreads)),

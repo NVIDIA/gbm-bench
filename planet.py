@@ -280,9 +280,11 @@ benchmarks = {
                      dict(xgb_common_params, nthread=nthreads,
                           grow_policy="lossguide", tree_method="hist")),
     "xgb-gpu":      (True, PlanetBenchmark, metrics,
-                     dict(xgb_common_params, tree_method="gpu_exact")),
+                     dict(xgb_common_params, tree_method="gpu_exact",
+                          objective="gpu:binary:logistic")),
     "xgb-gpu-hist": (True, PlanetBenchmark, metrics,
-                     dict(xgb_common_params, tree_method="gpu_hist", max_bins=63)),
+                     dict(xgb_common_params, tree_method="gpu_hist", max_bins=63,
+                          objective="gpu:binary:logistic")),
 
     "lgbm-cpu":     (True, PlanetBenchmark, metrics,
                      dict(lgb_common_params, nthread=nthreads)),
