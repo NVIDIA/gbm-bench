@@ -34,7 +34,7 @@ def prepareImpl(dbFolder, testSize, shuffle):
     X_test = scaler.transform(X_test)
     return Data(X_train, X_test, y_train, y_test)
 
-def prepare(dbFolder):
+def prepare(dbFolder, nrows):
     return prepareImpl(dbFolder, 0.3, True)
 
 

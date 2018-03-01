@@ -4,7 +4,7 @@ import msltr
 from utils import *
 
 
-def prepare(dbFolder):
+def prepare(dbFolder, nrows):
     return msltr.load_full(dbFolder, "MSLR-WEB30K.zip")
 
 

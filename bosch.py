@@ -228,7 +228,7 @@ def prepareImpl(dbFolder, testSize, shuffle):
     print('Bosch dataset loaded in %.2fs' % load_time, file=sys.stderr)
     return Data(X_train, X_test, y_train, y_test)
 
-def prepare(dbFolder):
+def prepare(dbFolder, nrows):
     return prepareImpl(dbFolder, 183747, True)
 
 

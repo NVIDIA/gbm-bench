@@ -57,12 +57,13 @@ def prepareImplCommon(dbFolder, testSize, shuffle, datasetFileName, numRows):
     print("Airline dataset loaded in %.2fs" % load_time, file=sys.stderr)    
     return Data(X_train, X_test, y_train, y_test)
 
-def prepareImpl(dbFolder, testSize, shuffle):
+def prepareImpl(dbFolder, testSize, shuffle, nrows):
+    rows = 2e7 if nrows is None else nrows
     return prepareImplCommon(dbFolder, testSize, shuffle,
-                             "airline_14col.data.bz2", 2e7)
+                             "airline_14col.data.bz2", rows)
 
-def prepare(dbFolder):
-    return prepareImpl(dbFolder, 0.2, True)
+def prepare(dbFolder, nrows):
+    return prepareImpl(dbFolder, 0.2, True, nrows)
 
 
 def metrics(y_test, y_prob):

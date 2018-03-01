@@ -171,7 +171,7 @@ def load_processed(path):
 
 # TODO: support for prepareImpl, like other datasets
 
-def prepare(dbFolder):
+def prepare(dbFolder, nrows):
     full_csv_name = "train_full.csv"
     full_csv_path = os.path.join(dbFolder, full_csv_name)
     start = time.time()

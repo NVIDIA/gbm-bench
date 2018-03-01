@@ -350,7 +350,7 @@ def prepareImpl(dbFolder, test_size, shuffle):
     print("Time to read and split data: ", (time.time() - start))
     return Data(X_train, X_test, y_train, y_test)
 
-def prepare(dbFolder):
+def prepare(dbFolder, nrows):
     return prepareImpl(dbFolder, 0.2, True)
 
 

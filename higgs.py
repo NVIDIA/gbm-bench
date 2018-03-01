@@ -45,7 +45,7 @@ def prepareImpl(dbFolder, test_size, shuffle):
     return Data(X_train, X_test, y_train, y_test)
 
 
-def prepare(dbFolder):
+def prepare(dbFolder, nrows):
     return prepareImpl(dbFolder, 500000, True)
 
 

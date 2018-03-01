@@ -41,7 +41,7 @@ def load_full(dbFolder, zip_name):
     print("msltr dataset loaded and preprocessed in %.2fs" % load_time)
     return Data(X_train, X_test, y_train, y_test)
 
-def prepare(dbFolder):
+def prepare(dbFolder, nrows):
     return load_full(dbFolder, "MSLR-WEB10K.zip")
 
 labels = [0, 1, 2, 3, 4]

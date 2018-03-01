@@ -31,6 +31,12 @@ def parseArgs():
     parser.add_argument("-ntrees", default=None, type=int,
                         help=("Number of trees. Default is as specified in "
                               "the respective dataset configuration"))
+    parser.add_argument("-nrows", default=None, type=int,
+                        help=("Total rows to be used for training/test. "
+                              "Default is to consume full dataset. However, "
+                              "for this to work, the dataset module should "
+                              "support customizing rows. Currently only "
+                              "airline and airline_ext do so!"))
     parser.add_argument("-extra", default='{}',
                         help="Extra arguments as a python dictionary")
     args = parser.parse_args()
@@ -68,9 +74,9 @@ def addExtraParams(params, extraParams, bName):
     return
 
 # benchmarks a single dataset
-def benchmark(dbFolder, module, benchmarks, extra_params):
+def benchmark(dbFolder, module, benchmarks, extra_params, nrows):
     warnings.filterwarnings("ignore")
-    data = module.prepare(dbFolder)
+    data = module.prepare(dbFolder, nrows)
     funcs = module.benchmarks
     results = {}
     # "all" runs all benchmarks
@@ -107,7 +113,7 @@ def main():
     if args.ntrees is not None:
         extra_params["ntrees"] = args.ntrees
     extra_params["extra"] = ast.literal_eval(args.extra)
-    results = benchmark(folder, module, benchmarks, extra_params)
+    results = benchmark(folder, module, benchmarks, extra_params, args.nrows)
     output = json.dumps(results, indent=2, sort_keys=True)
     print(output)
     fp = open(args.output, "w")
