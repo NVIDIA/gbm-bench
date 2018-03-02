@@ -38,13 +38,19 @@ def prepareImplCommon(dbFolder, testSize, shuffle, datasetFileName, numRows):
         "Diverted": dtype, "ArrDelay": dtype,
     }
     start = time.time()
-    df1 =  pd.read_csv(os.path.join(dbFolder, datasetFileName),
-                       names=cols, dtype=dtype_columns, nrows=numRows)
-    df2 = convert_related_cols_categorical_to_numeric(df1, col_list=["Origin","Dest"])
-    del df1
-    df3 = convert_cols_categorical_to_numeric(df2, col_list="UniqueCarrier")
-    del df2
-    df = df3
+    pklFile = os.path.join(dbFolder, datasetFileName + ".pkl")
+    if os.path.exists(pklFile):
+        df = pd.read_pickle(pklFile)
+    else:
+        df1 =  pd.read_csv(os.path.join(dbFolder, datasetFileName),
+                           names=cols, dtype=dtype_columns, nrows=numRows)
+        df2 = convert_related_cols_categorical_to_numeric(df1, col_list=["Origin",
+                                                                         "Dest"])
+        del df1
+        df3 = convert_cols_categorical_to_numeric(df2, col_list="UniqueCarrier")
+        del df2
+        df = df3
+        df.to_pickle(pklFile)
     df["ArrDelayBinary"] = 1*(df["ArrDelay"] > 0)    
     X, y = generate_feables(df)
     del df
