@@ -38,7 +38,7 @@ def prepareImplCommon(dbFolder, testSize, shuffle, datasetFileName, numRows):
         "Diverted": dtype, "ArrDelay": dtype,
     }
     start = time.time()
-    pklFile = os.path.join(dbFolder, datasetFileName + ".pkl")
+    pklFile = os.path.join(dbFolder, "%s-%d.pkl" % (datasetFileName, numRows))
     if os.path.exists(pklFile):
         df = pd.read_pickle(pklFile)
     else:

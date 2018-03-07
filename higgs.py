@@ -24,6 +24,7 @@ def generate_feables(df):
 def prepareImpl(dbFolder, test_size, shuffle):
     # reading compressed csv is supported in pandas
     csv_name = "HIGGS.csv.gz"
+    pkl_name = csv_name + '.pkl'
     cols = [
         "boson", "lepton_pT", "lepton_eta", "lepton_phi", "missing_energy_magnitude",
         "missing_energy_phi", "jet_1_pt", "jet_1_eta", "jet_1_phi", "jet_1_b-tag",
@@ -32,8 +33,13 @@ def prepareImpl(dbFolder, test_size, shuffle):
         "m_jj", "m_jjj", "m_lv", "m_jlv", "m_bb", "m_wbb", "m_wwbb"
     ]
     csv_file = os.path.join(dbFolder, csv_name)
+    pkl_file = os.path.join(dbFolder, pkl_name)
     start = time.time()
-    df = pd.read_csv(csv_file, names=cols, dtype=np.float32)
+    if os.path.exists(pkl_file):
+        df = pd.read_pickle(pkl_file)
+    else:
+        df = pd.read_csv(csv_file, names=cols, dtype=np.float32)
+        df.to_pickle(pkl_file)
     X, y = generate_feables(df)
     strati = y if shuffle else None
     X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=strati,
@@ -47,7 +53,6 @@ def prepareImpl(dbFolder, test_size, shuffle):
 
 def prepare(dbFolder, nrows):
     return prepareImpl(dbFolder, 500000, True)
-
 
 def metrics(y_test, y_prob):
     return classification_metrics_binary_prob(y_test, y_prob)
@@ -108,10 +113,10 @@ benchmarks = {
                           grow_policy="lossguide", tree_method="hist")),
     "xgb-gpu":      (False, XgbBenchmark, metrics,
                      dict(xgb_common_params, tree_method="gpu_exact",
-                          objective="binary:logistic")),
+                          objective="gpu:binary:logistic")),
     "xgb-gpu-hist": (True, XgbBenchmark, metrics,
                      dict(xgb_common_params, tree_method="gpu_hist",
-                          objective="binary:logistic")),
+                          objective="gpu:binary:logistic")),
 
     "lgbm-cpu":     (True, LgbBenchmark, metrics,
                      dict(lgb_common_params, nthread=nthreads)),
