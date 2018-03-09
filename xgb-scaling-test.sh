@@ -14,8 +14,7 @@
 #
 # Output:
 # Prints a csv formatted table of training/testing times are accuracy metrics
-# to the stdout, as a function of number of GPUs and also a function of whether
-# cpu or gpu based prediction was used
+# to the stdout, as a function of number of GPUs
 #
 
 function cudaVisibleDevices() {
@@ -56,19 +55,17 @@ export PYTHONPATH=`pwd`:`pwd`/../python-package
 touch catboost.py lightgbm.py
 for ngpus in 1 2 4 8; do
     devs=`cudaVisibleDevices $ngpus $dgx1v`
-    for pred in cpu gpu; do
-        env CUDA_VISIBLE_DEVICES=$devs \
-            OMP_PROC_BIND=TRUE \
-            OMP_NUM_THREADS=$ncpus \
-            OMP_PLACES="{0}:$ncpus" \
-            OMP_DISPLAY_ENV=TRUE \
-            ../../gbm-bench/runme.py -root ../../gbm-datasets/ \
-                -dataset $dataset \
-                -benchmark xgb-gpu-hist \
-                -ngpus $ngpus \
-                -ncpus $ncpus \
-                -extra "{'predictor':'${pred}_predictor'}" \
-                -output ${dataset}_${pred}_${ngpus}.json
-    done
+    env CUDA_VISIBLE_DEVICES=$devs \
+        OMP_PROC_BIND=TRUE \
+        OMP_NUM_THREADS=$ncpus \
+        OMP_PLACES="{0}:$ncpus" \
+        OMP_DISPLAY_ENV=TRUE \
+        ../../gbm-bench/runme.py -root ../../gbm-datasets/ \
+            -dataset $dataset \
+            -benchmark xgb-gpu-hist \
+            -ngpus $ngpus \
+            -ncpus $ncpus \
+            -extra "{'predictor':'gpu_predictor'}" \
+            -output ${dataset}_${ngpus}.json
 done
 ../../gbm-bench/json2csv.py *.json
