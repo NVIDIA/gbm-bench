@@ -65,7 +65,7 @@ for ngpus in 1 2 4 8; do
             -benchmark xgb-gpu-hist \
             -ngpus $ngpus \
             -ncpus $ncpus \
-            -extra "{'predictor':'gpu_predictor'}" \
+            -extra "{'predictor':'gpu_predictor', 'debug_verbose':1}" \
             -output ${dataset}_${ngpus}.json
 done
 ../../gbm-bench/json2csv.py *.json
