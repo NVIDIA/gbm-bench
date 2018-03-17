@@ -39,6 +39,8 @@ def parseArgs():
                               "airline and airline_ext do so!"))
     parser.add_argument("-extra", default='{}',
                         help="Extra arguments as a python dictionary")
+    parser.add_argument("-warmup", action="store_true",
+                        help=("Whether to run a small benchmark (fraud) as a warmup"))
     args = parser.parse_args()
     # default value for output json file
     if not args.output:
@@ -113,6 +115,10 @@ def main():
     if args.ntrees is not None:
         extra_params["ntrees"] = args.ntrees
     extra_params["extra"] = ast.literal_eval(args.extra)
+    if args.warmup:
+        warmup_extra_params = {"n_gpus": args.ngpus}
+        benchmark(os.path.join(args.root, "fraud"), __import__("fraud"),
+                  benchmarks, warmup_extra_params, args.nrows)
     results = benchmark(folder, module, benchmarks, extra_params, args.nrows)
     output = json.dumps(results, indent=2, sort_keys=True)
     print(output)
