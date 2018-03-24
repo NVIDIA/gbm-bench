@@ -16,35 +16,26 @@ def generate_feables(df):
     y = df["0"]
     return X,y
 
-def prepareImplCommon(dbFolder, testSize, shuffle, datasetFileName, numRows):
-    cols = [
-      "0","1","2","3","4","5","6","7","8","9",
-      "10","11","12","13","14","15","16","17","18","19",
-      "20","21","22","23","24","25","26","27","28","29",
-      "30","31","32","33","34","35","36","37","38","39"
-    ]
-
-    cat_cols = [
-      "14","15","16","17","18","19",
-      "20","21","22","23","24","25","26","27","28","29",
-      "30","31","32","33","34","35","36","37","38","39"
-    ]
-
+def prepareImplCommon(dbFolder, testSize, shuffle, npFeaturesFileName, npLabelsFileName, numRows):
     start = time.time()
-    pklFile = os.path.join(dbFolder, "%s-%d.pkl" % (datasetFileName, numRows))
-    if os.path.exists(pklFile):
-        df = pd.read_pickle(pklFile)
-    else:
-        df1 =  pd.read_csv(os.path.join(dbFolder, datasetFileName), sep='\t', names=cols)
-        df2 = convert_cols_categorical_to_numeric(df1, col_list=cat_cols)
-        df = df2
-        df.to_pickle(pklFile)
-    X, y = generate_feables(df)
-    del df
-    X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=None,
-                                                        shuffle=False,
-                                                        random_state=42,
-                                                        test_size=testSize)
+    s = time.time()
+    print("Loading npy files...")
+    X = np.load(os.path.join(dbFolder, npFeaturesFileName))
+    y = np.load(os.path.join(dbFolder, npLabelsFileName))
+    # print(len(y))
+    # print(np.count_nonzero(y))
+    print(X[0])
+    
+    idx = np.random.choice(np.arange(len(y)), numRows, replace=False)
+    X = X[idx]
+    y = y[idx]
+    print("Done loading npy files. %.2fs" % (time.time() - s))
+    
+    s = time.time()
+    print("Generating train/test split...")
+    # X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y, shuffle=shuffle, random_state=42, test_size=testSize)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=None, shuffle=False, random_state=42, test_size=testSize)
+    print("Done generating train/test split. %.2fs" % (time.time() - s))
     del X, y
     load_time = time.time() - start
     print("Criteo CTR dataset loaded in %.2fs" % load_time, file=sys.stderr)
@@ -52,11 +43,11 @@ def prepareImplCommon(dbFolder, testSize, shuffle, datasetFileName, numRows):
 
 def prepareImpl(dbFolder, testSize, shuffle, nrows):
     rows = 2e7 if nrows is None else nrows
-    return prepareImplCommon(dbFolder, testSize, shuffle, "day_1-1M.gz", rows)
-    # return prepareImplCommon(dbFolder, testSize, shuffle, "day_1.npy", rows)
+    return prepareImplCommon(dbFolder, testSize, shuffle,
+                             "day_1-features-10m.npy", "day_1-labels-10m.npy", rows)
 
 def prepare(dbFolder, nrows):
-    return prepareImpl(dbFolder, 0.01, True, nrows)
+    return prepareImpl(dbFolder, 0.1, True, nrows)
 
 
 def metrics(y_test, y_prob):
@@ -68,13 +59,13 @@ def catMetrics(y_test, y_prob):
 
 
 nthreads = get_number_processors()
-nTrees = 100
+nTrees = 500
 
 xgb_common_params = {
     "eta":              0.1,
     "gamma":            0.1,
     "learning_rate":    0.1,
-    "max_depth":        8,
+    "max_depth":        12,
     "max_leaves":       2**8,
     "min_child_weight": 30,
     "num_round":        nTrees,
