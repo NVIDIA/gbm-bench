@@ -96,19 +96,24 @@ def catMetrics(y_test, y_prob):
 
 
 nthreads = get_number_processors()
-nTrees = 500
+nTrees = 200
 
 xgb_common_params = {
-    "eta":              0.1,
-    "gamma":            0.1,
-    "learning_rate":    0.1,
-    "max_depth":        12,
-    "max_leaves":       2**8,
-    "min_child_weight": 30,
+    "eta":              0.2,
+    "gamma":            0.4,
+    # "learning_rate":    0.1,
+    "max_depth":        7,
+    # "max_leaves":       2**8,
+    "min_child_weight": 20,
     "num_round":        nTrees,
-    "reg_lambda":       1,
-    "scale_pos_weight": 2,
+    # "reg_lambda":       1,
+    # "scale_pos_weight": 2,
     "subsample":        1,
+    "lambda":           100,
+    "eval_metric":      "logloss",
+    "subsample":        0.8,
+    "colsample_bytree": 0.8,
+    "alpha":            3,
 }
 
 lgb_common_params = {
