@@ -11,21 +11,59 @@ from conversion import *
 from metrics import *
 from utils import *
 
-def generate_feables(df):
-    X = df[df.columns.difference(["0"])]
-    y = df["0"]
-    return X,y
+import glob
 
-def prepareImplCommon(dbFolder, testSize, shuffle, npFeaturesFileName, npLabelsFileName, numRows):
+def load_npy_files(globpath):
+    files = glob.glob(globpath)
+
+    # cheap way to shuffle the data a bit
+    np.random.shuffle(files)
+    # files.sort()
+    # show the first 10 files...
+    print("First 10 files...")
+    print(files[0:10])
+    # print the total number of files...
+    print("Imported {} files.".format(len(files)))
+
+    # faster way of loading/concatenating files...
+    ndarr_list = []
+    for f in files:
+        ndarr = np.load(f)
+        ndarr_list.append(ndarr)
+    ndarrs = np.concatenate(ndarr_list)
+
+    # slower way of loading/concatenating files...
+    # ndarrs = np.load(files[0])
+    # for f in files[1:]:
+    #     ndarrs = np.append(ndarrs, np.load(f), axis=0)
+
+    # double-check the shape...
+    print("Shape of imported ndarray: {}".format(ndarrs.shape))
+
+    # double-check first row of data...
+    print("First row of data...")
+    print(ndarrs[0])
+
+    return ndarrs
+
+def prepareImplCommon(dbFolder, testSize, shuffle, dbSubFolder, numRows):
     start = time.time()
     s = time.time()
     print("Loading npy files...")
-    X = np.load(os.path.join(dbFolder, npFeaturesFileName))
-    y = np.load(os.path.join(dbFolder, npLabelsFileName))
-    # print(len(y))
-    # print(np.count_nonzero(y))
-    print(X[0])
-    
+    data = load_npy_files(os.path.join(dbFolder, dbSubFolder, "day_[0-1]/*.npy"))
+    # data = load_npy_files(os.path.join(dbFolder, dbSubFolder, "day_0/*.npy"))
+
+    X = data[:, 1:]
+    y = data[:, 0]
+    del data
+
+    # reset the numRows
+    # print("Resetting numRows to the maximum length (ignoring input).")
+    # numRows = len(y)
+
+    print("Dataset has " + str(len(X[0])) + " input features.")
+    print("Dataset has " + str(len(X)) + " rows.")
+
     idx = np.random.choice(np.arange(len(y)), numRows, replace=False)
     X = X[idx]
     y = y[idx]
@@ -43,11 +81,10 @@ def prepareImplCommon(dbFolder, testSize, shuffle, npFeaturesFileName, npLabelsF
 
 def prepareImpl(dbFolder, testSize, shuffle, nrows):
     rows = 2e7 if nrows is None else nrows
-    return prepareImplCommon(dbFolder, testSize, shuffle,
-                             "day_1-features-10m.npy", "day_1-labels-10m.npy", rows)
+    return prepareImplCommon(dbFolder, testSize, shuffle, "etled", rows)
 
 def prepare(dbFolder, nrows):
-    return prepareImpl(dbFolder, 0.1, True, nrows)
+    return prepareImpl(dbFolder, 0.01, True, nrows)
 
 
 def metrics(y_test, y_prob):
