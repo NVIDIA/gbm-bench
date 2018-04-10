@@ -2,8 +2,7 @@
 # Source: https://github.com/Azure/fast_retraining/blob/master/experiments/05_FraudDetection.ipynb
 
 import numpy as np
-from sklearn.metrics import roc_auc_score, accuracy_score, precision_score, log_loss \
-    recall_score, f1_score
+from sklearn.metrics import roc_auc_score, accuracy_score, precision_score, log_loss, recall_score, f1_score
 
 
 def evaluate_metrics(y_true, y_pred, metrics):
@@ -19,7 +18,7 @@ def classification_metrics_binary_prob(y_true, y_prob, threshold=0.5):
         "Accuracy":  accuracy_score,
         "Precision": precision_score,
         "Recall":    recall_score,
-        "Log_Loss":  log_loss
+        "Log_Loss":  lambda real, pred: log_loss(real, y_prob, eps=1e-5),
         # yes, I'm using y_prob here!
         "AUC":       lambda real, pred: roc_auc_score(real, y_prob),
         "F1":        f1_score,
