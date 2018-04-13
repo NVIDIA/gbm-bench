@@ -193,9 +193,6 @@ Here are the steps involved in doing so:
 * Create a new class there which inherits from the base class Benchmark
 * Customize/Overwrite the methods as per this library's needs
 
-# TODOs
-TBD!
-
 # Yet another boosting tree benchmark?
 * This is more scriptable version (eg: for automated benchmarking)
 * Also adds CatBoost to the comparison list
