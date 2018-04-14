@@ -5,3 +5,5 @@
 *.log
 test/
 train/
+catboost_info/
+learn/

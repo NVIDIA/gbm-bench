@@ -276,12 +276,10 @@ cat_common_params = {
     "loss_function":    "Logloss",
 }
 
+
 # NOTES: some benchmarks are disabled!
-#  . cat-gpu throws the following error:
-# _catboost.CatboostError: catboost/libs/algo/full_features.cpp:29: There are nans in test dataset (feature number 0) but there were not nans in learn dataset
-#  . xgb-gpu  encounters illegal memory access
-# [16:16:33] /xgboost/dmlc-core/include/dmlc/./logging.h:300: [16:16:33] /xgboost/src/tree/updater_gpu.cu:528: GPU plugin exception: /xgboost/src/tree/../common/device_helpers.cuh(319): an illegal memory access was encountered
-# NOTES: some benchmarks are disabled!
+#  . xgb-gpu  produces illegal memory access error
+#  . cat-gpu  segfaults
 benchmarks = {
     "xgb-cpu":      (True, XgbBenchmark, metrics,
                      dict(xgb_common_params, tree_method="exact",

@@ -101,9 +101,6 @@ cat_common_params = {
 # NOTES: some benchmarks are disabled!
 #  . xgb-cpu takes almost an hour to train
 #  . xgb-gpu runs out of memory
-#  . lgb-gpu throws the following error
-#   [LightGBM] [Fatal] Bug in GPU histogram! split 2237769: 5377646, smaller_leaf: 2237689, larger_leaf: 5377726
-#  . cat-gpu  currently segfaults
 benchmarks = {
     "xgb-cpu":      (False, XgbBenchmark, metrics,
                      dict(xgb_common_params, tree_method="exact",
@@ -120,11 +117,11 @@ benchmarks = {
 
     "lgbm-cpu":     (True, LgbBenchmark, metrics,
                      dict(lgb_common_params, nthread=nthreads)),
-    "lgbm-gpu":     (False, LgbBenchmark, metrics,
+    "lgbm-gpu":     (True, LgbBenchmark, metrics,
                      dict(lgb_common_params, device="gpu")),
 
     "cat-cpu":      (True, CatBenchmark, catMetrics,
                      dict(cat_common_params, thread_count=nthreads)),
-    "cat-gpu":      (False, CatBenchmark, catMetrics,
+    "cat-gpu":      (True, CatBenchmark, catMetrics,
                      dict(cat_common_params, task_type="GPU")),
 }

@@ -24,6 +24,7 @@ _runAll: warmUp
 	$(MAKE) DATASET=msltr      run
 	$(MAKE) DATASET=msltr_full run
 	$(MAKE) DATASET=planet     run
+	rm -f catboost_training.json
 	./json2csv.py *.json > benchmark_$(MAXDEPTH)_$(NTREES).csv
 	rm -f *.json
 

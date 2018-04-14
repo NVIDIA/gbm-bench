@@ -12,7 +12,7 @@ datasets used here are the same as in the above repo.
   # dockerfiles github project is needed to build the docker image
   $ git clone https://github.com/teju85/dockerfiles
   $ cd dockerfiles/ubuntu1604
-  $ make gbm80
+  $ make gbm-bench90
 
   # this project
   $ cd ../..
@@ -134,7 +134,7 @@ your flow accordingly.
 
 ## Running a benchmark
 ```bash
-  $ ./dockerfiles/scripts/launch -user gbm:latest /bin/bash
+  $ ./dockerfiles/scripts/launch -user gbm-bench:latest-9.0 /bin/bash
   user@container$ cd /work/gbm-bench
   user@container$ ./runme.py -root ../gbm-datasets -dataset football
   user@container$ exit
@@ -186,6 +186,8 @@ benchmarks = {
 # params: map of params to be passed to the final library to customize the
 #         process of training
 ```
+* Add a line inside Makefile under '_runAll' target to benchmark this particular
+  dataset as well.
 
 # Adding a new library to benchmark?
 Here are the steps involved in doing so:
