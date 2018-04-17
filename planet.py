@@ -2,7 +2,6 @@
 # source: https://github.com/Azure/fast_retraining/blob/master/experiments/04_PlanetKaggle_GPU.ipynb
 # source: https://github.com/Azure/fast_retraining/blob/master/experiments/libs/loaders.py
 # source: https://github.com/Azure/fast_retraining/blob/master/experiments/libs/planet_kaggle.py
-# source: https://www.kaggle.com/c/planet-understanding-the-amazon-from-space/data/train_v2.csv.zip
 
 from __future__ import print_function
 

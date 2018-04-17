@@ -1,4 +1,3 @@
-# source: https://www.kaggle.com/airback/match-outcome-prediction-in-football
 # source: https://github.com/Azure/fast_retraining/blob/master/experiments/libs/loaders.py
 # source: https://github.com/Azure/fast_retraining/blob/master/experiments/03_football.ipynb
 # source: https://github.com/Azure/fast_retraining/blob/master/experiments/03_football_GPU.ipynb

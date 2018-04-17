@@ -1,5 +1,3 @@
-# source: https://www.kaggle.com/c/bosch-production-line-performance
-
 from __future__ import print_function
 
 import os

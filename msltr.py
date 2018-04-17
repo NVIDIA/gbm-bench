@@ -1,5 +1,3 @@
-# source: https://www.microsoft.com/en-us/research/project/mslr/
-
 from __future__ import print_function
 
 import os

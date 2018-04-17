@@ -1,5 +1,3 @@
-# Source: https://www.microsoft.com/en-us/research/project/mslr/
-
 import msltr
 from utils import *
 

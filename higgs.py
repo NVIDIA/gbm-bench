@@ -1,7 +1,6 @@
 # source: https://github.com/Azure/fast_retraining/blob/master/experiments/libs/loaders.py
 # source: https://github.com/Azure/fast_retraining/blob/master/experiments/06_HIGGS.ipynb
 # source: https://github.com/Azure/fast_retraining/blob/master/experiments/06_HIGGS_GPU.ipynb
-# source: https://archive.ics.uci.edu/ml/machine-learning-databases/00280/HIGGS.csv.gz
 
 from __future__ import print_function
 

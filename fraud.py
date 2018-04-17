@@ -1,7 +1,6 @@
 # source: https://github.com/Azure/fast_retraining/blob/master/experiments/libs/loaders.py
 # source: https://github.com/Azure/fast_retraining/blob/master/experiments/05_FraudDetection.ipynb
 # source: https://github.com/Azure/fast_retraining/blob/master/experiments/05_FraudDetection_GPU.ipynb
-# source: https://www.kaggle.com/dalpozz/creditcardfraud
 
 import os
 

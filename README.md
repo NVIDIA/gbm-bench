@@ -49,17 +49,6 @@ $ wget http://kt.ijs.si/elena_ikonomovska/datasets/airline/airline_14col.data.bz
 Extended version of airline dataset with a total of 165543376 rows.
 TBD - More info on downloading this dataset!
 
-## Allstate
-This is the dataset in the Kaggle-AllState claim prediction challenge. Link for
-the dataset is here: https://www.kaggle.com/c/ClaimPredictionChallenge/data
-Download the 'dictionary.html' and 'train_set.zip' files from this page inside a
-directory named 'allstate'.
-
-## BCI
-TODO!
-Brain Computer Interaction dataset. This is something I'm not sure how the MS
-researchers got from. A few trivial google-searches were unsuccessful.
-
 ## Bosch
 Bosch dataset as given out on Kaggle competition here:
 https://www.kaggle.com/c/bosch-production-line-performance/data. Download the
@@ -97,14 +86,8 @@ $ cd higgs
 $ wget https://archive.ics.uci.edu/ml/machine-learning-databases/00280/HIGGS.csv.gz
 ```
 
-## IOT
-Sensor stream data from Berkeley as found here:
-http://www.cse.fau.edu/~xqzhu/stream.html
-```bash
-$ mkdir iot
-$ cd iot
-$ wget http://www.cse.fau.edu/~xqzhu/Stream/sensor.arff
-```
+## Mortgage
+TBD: add information
 
 ## MS LTR
 Microsoft's Learning to Rate query-url dataset. Download the 'MSLR-WEB10K.zip'

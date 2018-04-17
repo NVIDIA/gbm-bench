@@ -1,7 +1,6 @@
 # source: https://github.com/Azure/fast_retraining/blob/master/experiments/libs/loaders.py
 # source: https://github.com/Azure/fast_retraining/blob/master/experiments/01_airline.ipynb
 # source: https://github.com/Azure/fast_retraining/blob/master/experiments/01_airline_GPU.ipynb
-# source: http://kt.ijs.si/elena_ikonomovska/datasets/airline/airline_14col.data.bz2
 
 from __future__ import print_function
 
