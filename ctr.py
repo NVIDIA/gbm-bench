@@ -18,10 +18,7 @@ def load_npy_files(globpath):
 
     # cheap way to shuffle the data a bit
     np.random.shuffle(files)
-    # files.sort()
-    # show the first 10 files...
-    print("First 10 files...")
-    print(files[0:10])
+
     # print the total number of files...
     print("Imported {} files.".format(len(files)))
 
@@ -31,11 +28,6 @@ def load_npy_files(globpath):
         ndarr = np.load(f)
         ndarr_list.append(ndarr)
     ndarrs = np.concatenate(ndarr_list)
-
-    # slower way of loading/concatenating files...
-    # ndarrs = np.load(files[0])
-    # for f in files[1:]:
-    #     ndarrs = np.append(ndarrs, np.load(f), axis=0)
 
     # double-check the shape...
     print("Shape of imported ndarray: {}".format(ndarrs.shape))
@@ -51,15 +43,10 @@ def prepareImplCommon(dbFolder, testSize, shuffle, dbSubFolder, numRows):
     s = time.time()
     print("Loading npy files...")
     data = load_npy_files(os.path.join(dbFolder, dbSubFolder, "day_[0-1]/*.npy"))
-    # data = load_npy_files(os.path.join(dbFolder, dbSubFolder, "day_0/*.npy"))
 
     X = data[:, 1:]
     y = data[:, 0]
     del data
-
-    # reset the numRows
-    # print("Resetting numRows to the maximum length (ignoring input).")
-    # numRows = len(y)
 
     print("Dataset has " + str(len(X[0])) + " input features.")
     print("Dataset has " + str(len(X)) + " rows.")
