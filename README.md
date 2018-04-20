@@ -56,15 +56,6 @@ https://www.kaggle.com/c/bosch-production-line-performance/data. Download the
 files 'train_numeric.csv.zip', 'train_date.csv.zip' and
 'train_categorial.csv.zip' into a folder named 'bosch'.
 
-## Criteo Kaggle Challenge
-Criteo display ad challenge as found here:
-https://www.kaggle.com/c/criteo-display-ad-challenge
-```bash
-$ mkdir criteo
-$ cd criteo
-$ wget https://s3-eu-west-1.amazonaws.com/criteo-labs/dac.tar.gz
-```
-
 ## Criteo CTR (> 1 TB)
 Criteo CTR (click-through rate) data as found here:
 http://labs.criteo.com/2013/12/download-terabyte-click-logs-2/
