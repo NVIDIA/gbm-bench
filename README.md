@@ -47,7 +47,8 @@ $ wget http://kt.ijs.si/elena_ikonomovska/datasets/airline/airline_14col.data.bz
 
 ## Airline (Extended)
 Extended version of airline dataset with a total of 165543376 rows.
-TBD - More info on downloading this dataset!
+Supplemental data can be downloaded from here:
+https://www.transtats.bts.gov/Tables.asp?DB_ID=120
 
 ## Bosch
 Bosch dataset as given out on Kaggle competition here:
