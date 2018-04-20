@@ -73,6 +73,7 @@ $ mkdir criteo
 $ cd criteo
 $ curl -O http://azuremlsampleexperiments.blob.core.windows.net/criteo/day_{`seq -s ‘,’ 0 23`}.gz
 ```
+(ETL instructions to come)
 
 ## Football
 Football dataset and its info can be found on Kaggle here:
@@ -98,6 +99,11 @@ $ wget https://archive.ics.uci.edu/ml/machine-learning-databases/00280/HIGGS.csv
 
 ## Mortgage
 TBD: add information
+
+## Mortgage Data from Fannie Mae
+Download the raw acquisition and performance data from here:
+http://www.fanniemae.com/portal/funding-the-market/data/loan-performance-data.html
+(ETL instructions to come)
 
 ## MS LTR
 Microsoft's Learning to Rate query-url dataset. Download the 'MSLR-WEB10K.zip'
