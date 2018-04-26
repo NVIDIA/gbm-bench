@@ -16,7 +16,7 @@ datasets used here are the same as in the above repo.
 
   # this project
   $ cd ../..
-  $ git clone https://github.com/teju85/gbm-bench   ## TODO!
+  $ git clone https://github.com/NVIDIA/gradient-boosted-benchmarks
 
   $ cd ..
   # Download the datasets as described in the next section.
@@ -62,7 +62,7 @@ http://labs.criteo.com/2013/12/download-terabyte-click-logs-2/
 ```bash
 $ mkdir criteo
 $ cd criteo
-$ curl -O http://azuremlsampleexperiments.blob.core.windows.net/criteo/day_{`seq -s ‘,’ 0 23`}.gz
+$ for day in `seq 0 23`; do curl -O http://azuremlsampleexperiments.blob.core.windows.net/criteo/day_$day.gz; done
 ```
 (ETL instructions to come)
 
