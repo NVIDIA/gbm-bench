@@ -77,13 +77,13 @@ def parseArgs():
 def addExtraParams(params, extraParams, bName):
     # multi gpu case
     if "n_gpus" in extraParams:
-        if "xgb" in bName:
+        if "xgb" in bName or "rf" in bName:
             params["n_gpus"] = extraParams["n_gpus"]
         else:
             print("'n_gpus' currently only applies to 'xgboost'")
     # if need to customize tree depth
     if "maxdepth" in extraParams:
-        if "xgb" in bName:
+        if "xgb" in bName or "rf" in bName:
             params["max_depth"] = extraParams["maxdepth"]
             params["max_leaves"] = 2**extraParams["maxdepth"]
         elif "lgbm" in bName:
@@ -92,7 +92,7 @@ def addExtraParams(params, extraParams, bName):
             params["depth"] = extraParams["maxdepth"]
     # if need to customize number of boosters
     if "ntrees" in extraParams:
-        if "xgb" in bName or "lgbm" in bName:
+        if "xgb" in bName or "rf" in bName or "lgbm" in bName:
             params["num_round"] = extraParams["ntrees"]
         elif "cat" in bName:
             params["iterations"] = extraParams["ntrees"]

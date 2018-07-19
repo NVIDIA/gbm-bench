@@ -1,6 +1,6 @@
 # BSD License
 #
-# Copyright (c) 2016-present, Miguel González-Fierro. All rights reserved.
+# Copyright (c) 2016-present, Miguel Gonzalez-Fierro. All rights reserved.
 # Copyright (c) 2018, NVIDIA CORPORATION. All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification,
@@ -13,7 +13,7 @@
 #    this list of conditions and the following disclaimer in the documentation
 #    and/or other materials provided with the distribution.
 #
-#  * Neither the name Miguel González-Fierro nor the names of its contributors may be used to
+#  * Neither the name Miguel Gonzalez-Fierro nor the names of its contributors may be used to
 #    endorse or promote products derived from this software without specific
 #    prior written permission.
 #

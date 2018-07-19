@@ -12,7 +12,7 @@ datasets used here are the same as in the above repo.
   # dockerfiles github project is needed to build the docker image
   $ git clone https://github.com/teju85/dockerfiles
   $ cd dockerfiles/ubuntu1604
-  $ make gbm-bench90
+  $ make gbm-bench92
 
   # this project
   $ cd ../..
