@@ -138,11 +138,12 @@ cat_common_params = {
 
 rf_common_params = dict(xgb_common_params)
 rf_common_params.update({
-    "num_round":         1,
     "colsample_bytree":  0.8,
-    "subsample":         0.8,
+    "eta":               1.0,
     "num_parallel_tree": nTrees,
+    "num_round":         1,
     "random_state":      42,
+    "subsample":         0.8,
 })
 
 
@@ -162,6 +163,9 @@ benchmarks = {
 
     "rf-gpu-hist":  (True, XgbBenchmark, metrics,
                      dict(rf_common_params, tree_method="gpu_hist",
+                          objective="gpu:binary:logistic")),
+    "rf-gpu":       (True, XgbBenchmark, metrics,
+                     dict(rf_common_params, tree_method="gpu_exact",
                           objective="gpu:binary:logistic")),
 
     "lgbm-cpu":     (True, LgbBenchmark, metrics,
