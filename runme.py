@@ -118,8 +118,9 @@ def benchmark(dbFolder, module, benchmarks, extra_params, nrows):
         addExtraParams(params, extra_params, name)
         print("Running '%s' ..." % name)
         runner = cls(data, params)
-        (train_time, test_time) = runner.run()
+        (prepare_time, train_time, test_time) = runner.run()
         results[name] = {
+            "prepare_time": prepare_time,
             "train_time": train_time,
             "test_time":  test_time,
             "accuracy":   metrics(runner.data.y_test, runner.y_pred),

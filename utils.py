@@ -54,17 +54,22 @@ class Benchmark:
         self.y_pred = None
 
     def run(self):
+        # preparing; calling DMatrix ctors for train and test
+        start = time.time()
         self.prepare()
+        prepare_time = time.time() - start
+
         # training
         start = time.time()
         self.train()
         train_time = time.time() - start
+
         # testing
         start = time.time()
         self.test()
         test_time = time.time() - start
         self.cleanup()
-        return (train_time, test_time)
+        return (prepare_time, train_time, test_time)
 
     def prepare(self):
         pass
