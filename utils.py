@@ -24,17 +24,31 @@
 
 from __future__ import print_function
 
-import os
 import multiprocessing
+import os
 import subprocess
 import sys
 import time
 
-import lightgbm as lgb
-import xgboost as xgb
 import catboost as cat
+import lightgbm as lgb
+import pandas as pd
+import pygdf.dataframe as gdf
+import xgboost as xgb
 
 from metrics import *
+
+# convert an object to GDF
+def to_gdf(obj):
+    if isinstance(obj, pd.DataFrame):
+        return gdf.DataFrame.from_pandas(obj)
+    elif isinstance(obj, pd.Series):
+        return gdf.DataFrame.from_pandas(obj.to_frame())
+    elif isinstance(obj, gdf.DataFrame):
+        return obj
+    elif isinstance(obj, gdf.Series):
+        return obj
+    raise ValueError('type %s not supported' % type(obj))
 
 
 # just a container for (X|y)_(train,test)
@@ -45,6 +59,22 @@ class Data:
         self.y_train = y_train
         self.y_test = y_test
 
+    def to_gdf(self):
+        X_train_gdf = to_gdf(self.X_train)
+        X_test_gdf = to_gdf(self.X_test)
+        y_train_gdf = to_gdf(self.y_train)
+        y_test_gdf = to_gdf(self.y_test)
+        return Data(X_train_gdf, X_test_gdf, y_train_gdf, y_test_gdf)
+
+    def y_test_matrix(self):
+        y = self.y_test
+        if isinstance(y, gdf.DataFrame):
+            return y.as_matrix()
+        elif isinstance(y, gdf.Series):
+            return y.to_array()
+        else:
+            return y
+
 
 class Benchmark:
     def __init__(self, data, params):
@@ -54,6 +84,9 @@ class Benchmark:
         self.y_pred = None
 
     def run(self):
+        # preparing the df: converting them to GDF if necessary; this is not timed
+        self.df_prepare()
+        
         # preparing; calling DMatrix ctors for train and test
         start = time.time()
         self.prepare()
@@ -70,6 +103,9 @@ class Benchmark:
         test_time = time.time() - start
         self.cleanup()
         return (prepare_time, train_time, test_time)
+
+    def df_prepare(self):
+        pass
 
     def prepare(self):
         pass
@@ -100,6 +136,11 @@ class XgbBenchmark(Benchmark):
         del self.dtrain
         del self.dtest
         Benchmark.cleanup(self)
+
+
+class XgbGdfBenchmark(XgbBenchmark):
+    def df_prepare(self):
+        self.data = self.data.to_gdf()
 
 
 class LgbBenchmark(Benchmark):

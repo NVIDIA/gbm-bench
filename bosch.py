@@ -317,6 +317,12 @@ benchmarks = {
     "xgb-gpu-hist": (True, XgbBenchmark, metrics,
                      dict(xgb_common_params, tree_method="gpu_hist",
                           objective="gpu:binary:logistic")),
+    "xgb-gdf":      (False, XgbGdfBenchmark, metrics,
+                     dict(xgb_common_params, tree_method="gpu_exact",
+                          objective="gpu:binary:logistic")),
+    "xgb-gdf-hist": (True, XgbGdfBenchmark, metrics,
+                     dict(xgb_common_params, tree_method="gpu_hist",
+                          objective="gpu:binary:logistic")),
 
     "lgbm-cpu":     (True, LgbBenchmark, metrics,
                      dict(lgb_common_params, nthread=nthreads)),

@@ -237,15 +237,16 @@ class PlanetBenchmark(Benchmark):
                               y_train_class, y_test_class)
             # run per-class benchmark
             benchmark_class = self.benchmark_cls(data_class, self.params)
-            (tr_time, te_time) = benchmark_class.run()
+            (pre_time, tr_time, te_time) = benchmark_class.run()
             # copy the prediction data
             if self.postprocess:
                 benchmark_class.y_pred = self.postprocess(benchmark_class.y_pred)
             self.y_pred[:, i_class] = benchmark_class.y_pred
             # aggregate timings
+            prepare_time += pre_time
             train_time += tr_time
             test_time += te_time
-        return (train_time, test_time)
+        return (prepare_time, train_time, test_time)
 
 
 xgb_common_params = {
@@ -300,6 +301,12 @@ benchmarks = {
     "xgb-gpu-hist": (True, PlanetBenchmark, metrics,
                      dict(xgb_common_params, tree_method="gpu_hist", max_bins=63,
                           objective="gpu:binary:logistic")),
+    "xgb-gdf":      (True, PlanetBenchmark, metrics,
+                     dict(xgb_common_params, tree_method="gpu_exact",
+                          objective="gpu:binary:logistic", benchmark_cls=XgbGdfBenchmark)),
+    "xgb-gdf-hist": (True, PlanetBenchmark, metrics,
+                     dict(xgb_common_params, tree_method="gpu_hist", max_bins=63,
+                          objective="gpu:binary:logistic", benchmark_cls=XgbGdfBenchmark)),
 
     "lgbm-cpu":     (True, PlanetBenchmark, metrics,
                      dict(lgb_common_params, nthread=nthreads)),

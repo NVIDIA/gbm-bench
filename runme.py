@@ -123,7 +123,7 @@ def benchmark(dbFolder, module, benchmarks, extra_params, nrows):
             "prepare_time": prepare_time,
             "train_time": train_time,
             "test_time":  test_time,
-            "accuracy":   metrics(runner.data.y_test, runner.y_pred),
+            "accuracy":   metrics(runner.data.y_test_matrix(), runner.y_pred),
         }
     return results
 

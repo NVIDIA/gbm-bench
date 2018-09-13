@@ -46,6 +46,10 @@ benchmarks = {
                      dict(msltr.xgb_common_params, tree_method="gpu_exact")),
     "xgb-gpu-hist": (True, XgbBenchmark, msltr.metrics,
                      dict(msltr.xgb_common_params, tree_method="gpu_hist")),
+    "xgb-gdf":      (False, XgbGdfBenchmark, msltr.metrics,
+                     dict(msltr.xgb_common_params, tree_method="gpu_exact")),
+    "xgb-gdf-hist": (True, XgbGdfBenchmark, msltr.metrics,
+                     dict(msltr.xgb_common_params, tree_method="gpu_hist")),
 
     "lgbm-cpu":     (True, LgbBenchmark, msltr.metrics,
                      dict(msltr.lgb_common_params, nthread=msltr.nthreads)),
