@@ -115,19 +115,19 @@ cat_common_params = {
 
 
 benchmarks = {
-    "xgb-cpu":      (True, XgbBenchmark, metrics,
+    "xgb-cpu-exact":      (True, XgbBenchmark, metrics,
                      dict(xgb_common_params, tree_method="exact",
                           nthread=nthreads)),
-    "xgb-cpu-hist": (True, XgbBenchmark, metrics,
+    "xgb-cpu": (True, XgbBenchmark, metrics,
                      dict(xgb_common_params, nthread=nthreads,
                           grow_policy="lossguide", tree_method="hist")),
-    "xgb-gpu":      (True, XgbBenchmark, metrics,
+    "xgb-gpu-exact":      (True, XgbBenchmark, metrics,
                      dict(xgb_common_params, tree_method="gpu_exact")),
-    "xgb-gpu-hist": (True, XgbBenchmark, metrics,
+    "xgb-gpu": (True, XgbBenchmark, metrics,
                      dict(xgb_common_params, tree_method="gpu_hist")),
-    "xgb-gdf":      (True, XgbGdfBenchmark, metrics,
+    "xgb-gdf-exact":      (True, XgbGdfBenchmark, metrics,
                      dict(xgb_common_params, tree_method="gpu_exact")),
-    "xgb-gdf-hist": (True, XgbGdfBenchmark, metrics,
+    "xgb-gdf": (True, XgbGdfBenchmark, metrics,
                      dict(xgb_common_params, tree_method="gpu_hist")),
 
     "lgbm-cpu":     (True, LgbBenchmark, metrics,

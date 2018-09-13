@@ -103,22 +103,22 @@ cat_common_params = {
 
 
 benchmarks = {
-    "xgb-cpu":      (True, XgbBenchmark, metrics,
+    "xgb-cpu-exact":      (True, XgbBenchmark, metrics,
                      dict(xgb_common_params, tree_method="exact",
                           nthread=nthreads)),
-    "xgb-cpu-hist": (True, XgbBenchmark, metrics,
+    "xgb-cpu": (True, XgbBenchmark, metrics,
                      dict(xgb_common_params, nthread=nthreads,
                           grow_policy="lossguide", tree_method="hist")),
-    "xgb-gpu":      (True, XgbBenchmark, metrics,
+    "xgb-gpu-exact":      (True, XgbBenchmark, metrics,
                      dict(xgb_common_params, tree_method="gpu_exact",
                           objective="gpu:binary:logistic")),
-    "xgb-gpu-hist": (True, XgbBenchmark, metrics,
+    "xgb-gpu": (True, XgbBenchmark, metrics,
                      dict(xgb_common_params, tree_method="gpu_hist",
                           objective="gpu:binary:logistic")),
-    "xgb-gdf":      (True, XgbGdfBenchmark, metrics,
+    "xgb-gdf-exact":      (True, XgbGdfBenchmark, metrics,
                      dict(xgb_common_params, tree_method="gpu_exact",
                           objective="gpu:binary:logistic")),
-    "xgb-gdf-hist": (True, XgbGdfBenchmark, metrics,
+    "xgb-gdf": (True, XgbGdfBenchmark, metrics,
                      dict(xgb_common_params, tree_method="gpu_hist",
                           objective="gpu:binary:logistic")),
 

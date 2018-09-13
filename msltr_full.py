@@ -36,19 +36,19 @@ def prepare(dbFolder, nrows):
 #  . xgb-gpu  out of memory
 #  . cat-gpu  currently segfaults
 benchmarks = {
-    "xgb-cpu":      (True, XgbBenchmark, msltr.metrics,
+    "xgb-cpu-exact":      (True, XgbBenchmark, msltr.metrics,
                      dict(msltr.xgb_common_params, tree_method="exact",
                           nthread=msltr.nthreads)),
-    "xgb-cpu-hist": (True, XgbBenchmark, msltr.metrics,
+    "xgb-cpu": (True, XgbBenchmark, msltr.metrics,
                      dict(msltr.xgb_common_params, nthread=msltr.nthreads,
                           grow_policy="lossguide", tree_method="hist")),
-    "xgb-gpu":      (False, XgbBenchmark, msltr.metrics,
+    "xgb-gpu-exact":      (False, XgbBenchmark, msltr.metrics,
                      dict(msltr.xgb_common_params, tree_method="gpu_exact")),
-    "xgb-gpu-hist": (True, XgbBenchmark, msltr.metrics,
+    "xgb-gpu": (True, XgbBenchmark, msltr.metrics,
                      dict(msltr.xgb_common_params, tree_method="gpu_hist")),
-    "xgb-gdf":      (False, XgbGdfBenchmark, msltr.metrics,
+    "xgb-gdf-exact":      (False, XgbGdfBenchmark, msltr.metrics,
                      dict(msltr.xgb_common_params, tree_method="gpu_exact")),
-    "xgb-gdf-hist": (True, XgbGdfBenchmark, msltr.metrics,
+    "xgb-gdf": (True, XgbGdfBenchmark, msltr.metrics,
                      dict(msltr.xgb_common_params, tree_method="gpu_hist")),
 
     "lgbm-cpu":     (True, LgbBenchmark, msltr.metrics,
