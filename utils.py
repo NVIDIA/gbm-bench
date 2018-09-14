@@ -31,7 +31,12 @@ import sys
 import time
 
 import catboost as cat
+import dask as dask
+import dask.dataframe as ddf
+import dask.distributed as dd
+import dask_xgboost as dxgb
 import lightgbm as lgb
+import numpy as np
 import pandas as pd
 import pygdf.dataframe as gdf
 import xgboost as xgb
@@ -66,14 +71,24 @@ class Data:
         y_test_gdf = to_gdf(self.y_test)
         return Data(X_train_gdf, X_test_gdf, y_train_gdf, y_test_gdf)
 
+    def to_dask(self, nworkers):
+        X_train_dask = ddf.from_pandas(self.X_train, npartitions=nworkers)
+        X_test_dask = ddf.from_pandas(self.X_test, npartitions=nworkers)
+        y_train_dask = ddf.from_pandas(self.y_train, npartitions=nworkers)
+        y_test_dask = ddf.from_pandas(self.y_test, npartitions=nworkers)
+        X_train_dask, X_test_dask, y_train_dask, y_test_dask = dask.persist(
+            X_train_dask, X_test_dask, y_train_dask, y_test_dask)
+        return Data(X_train_dask, X_test_dask, y_train_dask, y_test_dask)
+
     def y_test_matrix(self):
         y = self.y_test
         if isinstance(y, gdf.DataFrame):
             return y.as_matrix()
         elif isinstance(y, gdf.Series):
             return y.to_array()
-        else:
-            return y
+        elif isinstance(y, ddf.DataFrame):
+            return y.as_pandas()
+        return y
 
 
 class Benchmark:
@@ -82,6 +97,16 @@ class Benchmark:
         self.params = params
         self.model = None
         self.y_pred = None
+
+    def __enter__(self):
+        pass
+
+    def df_prepare(self):
+        pass
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        if self.model is not None:
+            del self.model
 
     def run(self):
         # preparing the df: converting them to GDF if necessary; this is not timed
@@ -101,11 +126,7 @@ class Benchmark:
         start = time.time()
         self.test()
         test_time = time.time() - start
-        self.cleanup()
         return (prepare_time, train_time, test_time)
-
-    def df_prepare(self):
-        pass
 
     def prepare(self):
         pass
@@ -116,9 +137,86 @@ class Benchmark:
     def test(self):
         pass
 
-    def cleanup(self):
-        if self.model is not None:
-            del self.model
+
+# dask environment; manages the processes
+# TODO: actually make it customizable
+class DaskEnv:
+    scheduler = None
+    workers = None
+    params = None
+    nworkers = None
+    
+    def __init__(self, params):
+        self.params = params
+        self.nworkers = params['nworkers']
+
+    def start(self):
+        # start the scheduler
+        self.scheduler = subprocess.Popen(
+            ['dask-scheduler', '--port=8787', '--host=127.0.0.1'])
+        time.sleep(1)
+        # start the workers with the right devices
+        ram_fraction = 1.0 / self.nworkers
+        self.workers = []
+        for i in range(self.nworkers):
+            env = os.environ.copy()
+            env.update({'CUDA_VISIBLE_DEVICES': '%d' % i})
+            self.workers.append(subprocess.Popen(
+                ['dask-worker',  '127.0.0.1:8787', '--memory-limit=%.3f' % ram_fraction,
+                 '--nprocs=1', '--nthreads=1'], env=env))
+        time.sleep(1)
+
+    def stop(self):
+        time.sleep(1)
+        for i in range(self.nworkers):
+            self.workers[i].kill()
+        self.scheduler.kill()
+
+
+# runs the benchmark using dask-xgboost
+class XgbDaskBenchmark(Benchmark):
+    dask_env = None
+    ip_port = '127.0.0.1:8787'  # ip:port for the Client
+    client = None
+
+    def __init__(self, data, params):
+        Benchmark.__init__(self, data, params)
+        # 'distributed_dask' must be True
+        self.params['distributed_dask']  = True
+
+    def __enter__(self):
+        Benchmark.__enter__(self)
+        # set up the dask environment
+        self.dask_env = DaskEnv({'nworkers': 2})
+        self.dask_env.start()
+        self.client = dd.Client(self.ip_port)
+        #print('initialized dask')
+
+    def df_prepare(self):
+        # prepare the dask dataframes
+        self.data = self.data.to_dask(self.dask_env.nworkers)
+        #print('prepared dask dataframe')
+
+    def train(self):
+        bst = dxgb.train(self.client, self.params, self.data.X_train,
+                                self.data.y_train,
+                                num_boost_round=self.params['num_round'])
+        if isinstance(bst, list):
+            # comment out this loop for higher performance
+            for i in range(len(bst)):
+                bst[i].dump_model('file-%d.model' % i)
+            bst = bst[0]
+        self.model = bst
+
+    def test(self):
+        self.y_pred = np.array(dxgb.predict(
+            self.client, self.model, self.data.X_test).persist())
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.client.close()
+        del self.client
+        self.dask_env.stop()
+        Benchmark.__exit__(self, exc_type, exc_value, traceback)
 
 
 class XgbBenchmark(Benchmark):
@@ -132,14 +230,15 @@ class XgbBenchmark(Benchmark):
     def test(self):
         self.y_pred = self.model.predict(self.dtest)
 
-    def cleanup(self):
+    def __exit__(self, exc_type, exc_value, traceback):
         del self.dtrain
         del self.dtest
-        Benchmark.cleanup(self)
+        Benchmark.__exit__(self, exc_type, exc_value, traceback)
 
 
 class XgbGdfBenchmark(XgbBenchmark):
     def df_prepare(self):
+        XgbBenchmark.df_prepare(self)
         self.data = self.data.to_gdf()
 
 
@@ -154,10 +253,10 @@ class LgbBenchmark(Benchmark):
     def test(self):
         self.y_pred = self.model.predict(self.data.X_test)
 
-    def cleanup(self):
+    def __exit__(self, exc_type, exc_value, traceback):
         self.model.free_dataset()
         del self.dtrain
-        Benchmark.cleanup(self)
+        Benchmark.__exit__(self, exc_type, exc_value, traceback)
 
 
 class CatBenchmark(Benchmark):

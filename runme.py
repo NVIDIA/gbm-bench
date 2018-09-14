@@ -112,19 +112,24 @@ def benchmark(dbFolder, module, benchmarks, extra_params, nrows):
         benchmarks = funcs.keys()
     for name in benchmarks:
         enabled, cls, metrics, params = funcs[name]
+        params = params.copy()
         if not enabled:
             print("Skipping '%s'... " % name)
             continue
         addExtraParams(params, extra_params, name)
         print("Running '%s' ..." % name)
+
         runner = cls(data, params)
-        (prepare_time, train_time, test_time) = runner.run()
-        results[name] = {
-            "prepare_time": prepare_time,
-            "train_time": train_time,
-            "test_time":  test_time,
-            "accuracy":   metrics(runner.data.y_test_matrix(), runner.y_pred),
-        }
+        with runner:
+            print(type(runner))
+            (prepare_time, train_time, test_time) = runner.run()
+            results[name] = {
+                "prepare_time": prepare_time,
+                "train_time": train_time,
+                "test_time":  test_time,
+                "accuracy":   metrics(data.y_test, runner.y_pred),
+            }
+
     return results
 
 def main():

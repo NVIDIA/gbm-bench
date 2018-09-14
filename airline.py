@@ -166,6 +166,10 @@ benchmarks = {
     "xgb-gdf": (True, XgbGdfBenchmark, metrics,
                      dict(xgb_common_params, tree_method="gpu_hist",
                           objective="gpu:binary:logistic")),
+    "xgb-dask-gpu": (True, XgbDaskBenchmark, metrics,
+                     dict(xgb_common_params, tree_method="gpu_hist",
+                          objective="gpu:binary:logistic", n_gpus=1)),
+
     "rf-gpu-exact":       (True, XgbBenchmark, metrics,
                      dict(rf_common_params, tree_method="gpu_exact",
                           objective="gpu:binary:logistic")),
