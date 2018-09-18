@@ -87,7 +87,7 @@ class Data:
         elif isinstance(y, gdf.Series):
             return y.to_array()
         elif isinstance(y, ddf.DataFrame):
-            return y.as_pandas()
+            return y.persist().compute()
         return y
 
 
@@ -136,6 +136,9 @@ class Benchmark:
 
     def test(self):
         pass
+
+    def y_test_matrix(self):
+        return self.data.y_test_matrix()
 
 
 # dask environment; manages the processes
@@ -190,12 +193,10 @@ class XgbDaskBenchmark(Benchmark):
         self.dask_env = DaskEnv({'nworkers': 2})
         self.dask_env.start()
         self.client = dd.Client(self.ip_port)
-        #print('initialized dask')
 
     def df_prepare(self):
         # prepare the dask dataframes
         self.data = self.data.to_dask(self.dask_env.nworkers)
-        #print('prepared dask dataframe')
 
     def train(self):
         bst = dxgb.train(self.client, self.params, self.data.X_train,
@@ -209,8 +210,8 @@ class XgbDaskBenchmark(Benchmark):
         self.model = bst
 
     def test(self):
-        self.y_pred = np.array(dxgb.predict(
-            self.client, self.model, self.data.X_test).persist())
+        self.y_pred = dxgb.predict(
+            self.client, self.model, self.data.X_test).persist().compute()
 
     def __exit__(self, exc_type, exc_value, traceback):
         self.client.close()
