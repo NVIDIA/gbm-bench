@@ -186,11 +186,10 @@ class XgbDaskBenchmark(Benchmark):
         Benchmark.__init__(self, data, params)
         # 'distributed_dask' must be True
         self.params['distributed_dask']  = True
-
-    def __enter__(self):
-        Benchmark.__enter__(self)
+        self.params['nworkers'] = self.params['n_gpus']
+        self.params['n_gpus'] = 1
         # set up the dask environment
-        self.dask_env = DaskEnv({'nworkers': 2})
+        self.dask_env = DaskEnv({'nworkers': self.params['nworkers']})
         self.dask_env.start()
         self.client = dd.Client(self.ip_port)
 
@@ -200,8 +199,8 @@ class XgbDaskBenchmark(Benchmark):
 
     def train(self):
         bst = dxgb.train(self.client, self.params, self.data.X_train,
-                                self.data.y_train,
-                                num_boost_round=self.params['num_round'])
+                         self.data.y_train,
+                         num_boost_round=self.params['num_round'])
         if isinstance(bst, list):
             # comment out this loop for higher performance
             for i in range(len(bst)):
