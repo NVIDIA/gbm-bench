@@ -34,6 +34,7 @@ import catboost as cat
 import dask as dask
 import dask.dataframe as ddf
 import dask.distributed as dd
+import dask_gdf as dgdf
 import dask_xgboost as dxgb
 import lightgbm as lgb
 import numpy as np
@@ -79,6 +80,25 @@ class Data:
         X_train_dask, X_test_dask, y_train_dask, y_test_dask = dask.persist(
             X_train_dask, X_test_dask, y_train_dask, y_test_dask)
         return Data(X_train_dask, X_test_dask, y_train_dask, y_test_dask)
+
+    def to_dask_gdf(self, nworkers):
+        d1 = self.to_gdf()
+        X_train_dgdf = dgdf.from_pygdf(d1.X_train, npartitions=nworkers)
+        X_test_dgdf = dgdf.from_pygdf(d1.X_test, npartitions=nworkers)
+        y_train_dgdf = dgdf.from_pygdf(d1.y_train, npartitions=nworkers)
+        y_test_dgdf = dgdf.from_pygdf(d1.y_test, npartitions=nworkers)
+        X_train_dgdf, X_test_dgdf, y_train_dgdf, y_test_dgdf = dask.persist(
+            X_train_dgdf, X_test_dgdf, y_train_dgdf, y_test_dgdf)
+        return Data(X_train_dgdf, X_test_dgdf, y_train_dgdf, y_test_dgdf)
+
+    # def to_dask_gdf(self, nworkers):
+    #     X_train_dgdf = dgdf._daskify(d1.X_train, npartitions=nworkers)
+    #     X_test_dgdf = dgdf._daskify(d1.X_test, npartitions=nworkers)
+    #     y_train_dgdf = dgdf._daskify(d1.y_train, npartitions=nworkers)
+    #     y_test_dgdf = dgdf._daskify(d1.y_test, npartitions=nworkers)
+    #     X_train_dgdf, X_test_dgdf, y_train_dgdf, y_test_dgdf = dask.persist(
+    #         X_train_dgdf, X_test_dgdf, y_train_dgdf, y_test_dgdf)
+    #     return Data(X_train_dgdf, X_test_dgdf, y_train_dgdf, y_test_dgdf)
 
     def y_test_matrix(self):
         y = self.y_test
@@ -218,6 +238,16 @@ class XgbDaskBenchmark(Benchmark):
         del self.client
         self.dask_env.stop()
         Benchmark.__exit__(self, exc_type, exc_value, traceback)
+
+
+class XgbDaskGdfBenchmark(XgbDaskBenchmark):
+
+    def __init__(self, data, params):
+        Benchmark.__init__(self, data, params)
+
+    def df_prepare(self):
+        # prepare the dask-gdf dataframes
+        self.data = self.data.to_dask_gdf(self.dask_env.nworkers)
 
 
 class XgbBenchmark(Benchmark):
