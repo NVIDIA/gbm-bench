@@ -75,30 +75,35 @@ class Data:
     def to_dask(self, nworkers):
         X_train_dask = ddf.from_pandas(self.X_train, npartitions=nworkers)
         X_test_dask = ddf.from_pandas(self.X_test, npartitions=nworkers)
-        y_train_dask = ddf.from_pandas(self.y_train, npartitions=nworkers)
-        y_test_dask = ddf.from_pandas(self.y_test, npartitions=nworkers)
+        # y_train_dask = ddf.from_pandas(self.y_train, npartitions=nworkers)
+        # y_test_dask = ddf.from_pandas(self.y_test, npartitions=nworkers)
+        y_train_dask = ddf.from_pandas(self.y_train.to_frame(), npartitions=nworkers)
+        y_test_dask = ddf.from_pandas(self.y_test.to_frame(), npartitions=nworkers)
         X_train_dask, X_test_dask, y_train_dask, y_test_dask = dask.persist(
             X_train_dask, X_test_dask, y_train_dask, y_test_dask)
         return Data(X_train_dask, X_test_dask, y_train_dask, y_test_dask)
 
-    def to_dask_gdf(self, nworkers):
-        d1 = self.to_gdf()
-        X_train_dgdf = dgdf.from_pygdf(d1.X_train, npartitions=nworkers)
-        X_test_dgdf = dgdf.from_pygdf(d1.X_test, npartitions=nworkers)
-        y_train_dgdf = dgdf.from_pygdf(d1.y_train, npartitions=nworkers)
-        y_test_dgdf = dgdf.from_pygdf(d1.y_test, npartitions=nworkers)
-        X_train_dgdf, X_test_dgdf, y_train_dgdf, y_test_dgdf = dask.persist(
-            X_train_dgdf, X_test_dgdf, y_train_dgdf, y_test_dgdf)
-        return Data(X_train_dgdf, X_test_dgdf, y_train_dgdf, y_test_dgdf)
-
     # def to_dask_gdf(self, nworkers):
-    #     X_train_dgdf = dgdf._daskify(d1.X_train, npartitions=nworkers)
-    #     X_test_dgdf = dgdf._daskify(d1.X_test, npartitions=nworkers)
-    #     y_train_dgdf = dgdf._daskify(d1.y_train, npartitions=nworkers)
-    #     y_test_dgdf = dgdf._daskify(d1.y_test, npartitions=nworkers)
+    #     d1 = self.to_gdf()
+    #     X_train_dgdf = dgdf.from_pygdf(d1.X_train, npartitions=nworkers)
+    #     X_test_dgdf = dgdf.from_pygdf(d1.X_test, npartitions=nworkers)
+    #     y_train_dgdf = dgdf.from_pygdf(d1.y_train, npartitions=nworkers)
+    #     y_test_dgdf = dgdf.from_pygdf(d1.y_test, npartitions=nworkers)
     #     X_train_dgdf, X_test_dgdf, y_train_dgdf, y_test_dgdf = dask.persist(
     #         X_train_dgdf, X_test_dgdf, y_train_dgdf, y_test_dgdf)
     #     return Data(X_train_dgdf, X_test_dgdf, y_train_dgdf, y_test_dgdf)
+
+    def to_dask_gdf(self, nworkers):
+        d1 = self.to_dask(nworkers)
+        X_train_dgdf = dgdf.from_dask_dataframe(d1.X_train)
+        #print(X_train_dgdf.columns)
+        X_test_dgdf = dgdf.from_dask_dataframe(d1.X_test)
+        #print(X_test_dgdf.columns)
+        y_train_dgdf = dgdf.from_dask_dataframe(d1.y_train)
+        y_test_dgdf = dgdf.from_dask_dataframe(d1.y_test)
+        # X_train_dgdf, X_test_dgdf, y_train_dgdf, y_test_dgdf = dask.persist(
+        #     X_train_dgdf, X_test_dgdf, y_train_dgdf, y_test_dgdf)
+        return Data(X_train_dgdf, X_test_dgdf, y_train_dgdf, y_test_dgdf)
 
     def y_test_matrix(self):
         y = self.y_test
@@ -106,8 +111,10 @@ class Data:
             return y.as_matrix()
         elif isinstance(y, gdf.Series):
             return y.to_array()
-        elif isinstance(y, ddf.DataFrame):
+        elif isinstance(y, (ddf.DataFrame, ddf.Series)):
             return y.persist().compute()
+        elif isinstance(y, (dgdf.DataFrame, dgdf.Series)):
+            return y.to_dask_dataframe().persist().compute()
         return y
 
 
@@ -210,6 +217,7 @@ class XgbDaskBenchmark(Benchmark):
     def __enter__(self):
         Benchmark.__enter__(self)
         # set up the dask environment
+        #self.dask_env = DaskEnv({'nworkers': 2})
         self.dask_env = DaskEnv({'nworkers': 2})
         self.dask_env.start()
         self.client = dd.Client(self.ip_port)

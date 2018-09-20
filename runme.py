@@ -122,6 +122,10 @@ def benchmark(dbFolder, module, benchmarks, extra_params, nrows):
         runner = cls(data, params)
         with runner:
             (prepare_time, train_time, test_time) = runner.run()
+            y_pred = runner.y_pred
+            y_test = runner.y_test_matrix()
+            #print(type(y_test))
+            #print(type(y_pred))
             results[name] = {
                 "prepare_time": prepare_time,
                 "train_time": train_time,
