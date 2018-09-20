@@ -34,6 +34,7 @@ import catboost as cat
 import dask as dask
 import dask.dataframe as ddf
 import dask.distributed as dd
+import dask_gdf as dgdf
 import dask_xgboost as dxgb
 import lightgbm as lgb
 import numpy as np
@@ -74,11 +75,35 @@ class Data:
     def to_dask(self, nworkers):
         X_train_dask = ddf.from_pandas(self.X_train, npartitions=nworkers)
         X_test_dask = ddf.from_pandas(self.X_test, npartitions=nworkers)
-        y_train_dask = ddf.from_pandas(self.y_train, npartitions=nworkers)
-        y_test_dask = ddf.from_pandas(self.y_test, npartitions=nworkers)
+        # y_train_dask = ddf.from_pandas(self.y_train, npartitions=nworkers)
+        # y_test_dask = ddf.from_pandas(self.y_test, npartitions=nworkers)
+        y_train_dask = ddf.from_pandas(self.y_train.to_frame(), npartitions=nworkers)
+        y_test_dask = ddf.from_pandas(self.y_test.to_frame(), npartitions=nworkers)
         X_train_dask, X_test_dask, y_train_dask, y_test_dask = dask.persist(
             X_train_dask, X_test_dask, y_train_dask, y_test_dask)
         return Data(X_train_dask, X_test_dask, y_train_dask, y_test_dask)
+
+    # def to_dask_gdf(self, nworkers):
+    #     d1 = self.to_gdf()
+    #     X_train_dgdf = dgdf.from_pygdf(d1.X_train, npartitions=nworkers)
+    #     X_test_dgdf = dgdf.from_pygdf(d1.X_test, npartitions=nworkers)
+    #     y_train_dgdf = dgdf.from_pygdf(d1.y_train, npartitions=nworkers)
+    #     y_test_dgdf = dgdf.from_pygdf(d1.y_test, npartitions=nworkers)
+    #     X_train_dgdf, X_test_dgdf, y_train_dgdf, y_test_dgdf = dask.persist(
+    #         X_train_dgdf, X_test_dgdf, y_train_dgdf, y_test_dgdf)
+    #     return Data(X_train_dgdf, X_test_dgdf, y_train_dgdf, y_test_dgdf)
+
+    def to_dask_gdf(self, nworkers):
+        d1 = self.to_dask(nworkers)
+        X_train_dgdf = dgdf.from_dask_dataframe(d1.X_train)
+        #print(X_train_dgdf.columns)
+        X_test_dgdf = dgdf.from_dask_dataframe(d1.X_test)
+        #print(X_test_dgdf.columns)
+        y_train_dgdf = dgdf.from_dask_dataframe(d1.y_train)
+        y_test_dgdf = dgdf.from_dask_dataframe(d1.y_test)
+        # X_train_dgdf, X_test_dgdf, y_train_dgdf, y_test_dgdf = dask.persist(
+        #     X_train_dgdf, X_test_dgdf, y_train_dgdf, y_test_dgdf)
+        return Data(X_train_dgdf, X_test_dgdf, y_train_dgdf, y_test_dgdf)
 
     def y_test_matrix(self):
         y = self.y_test
@@ -86,8 +111,10 @@ class Data:
             return y.as_matrix()
         elif isinstance(y, gdf.Series):
             return y.to_array()
-        elif isinstance(y, ddf.DataFrame):
+        elif isinstance(y, (ddf.DataFrame, ddf.Series)):
             return y.persist().compute()
+        elif isinstance(y, (dgdf.DataFrame, dgdf.Series)):
+            return y.to_dask_dataframe().persist().compute()
         return y
 
 
@@ -186,8 +213,12 @@ class XgbDaskBenchmark(Benchmark):
         Benchmark.__init__(self, data, params)
         # 'distributed_dask' must be True
         self.params['distributed_dask']  = True
+        # interpret GPUs as the number of workers
         self.params['nworkers'] = self.params['n_gpus']
         self.params['n_gpus'] = 1
+
+    def __enter__(self):
+        Benchmark.__enter__(self)
         # set up the dask environment
         self.dask_env = DaskEnv({'nworkers': self.params['nworkers']})
         self.dask_env.start()
@@ -217,6 +248,16 @@ class XgbDaskBenchmark(Benchmark):
         del self.client
         self.dask_env.stop()
         Benchmark.__exit__(self, exc_type, exc_value, traceback)
+
+
+class XgbDaskGdfBenchmark(XgbDaskBenchmark):
+
+    def __init__(self, data, params):
+        XgbDaskBenchmark.__init__(self, data, params)
+
+    def df_prepare(self):
+        # prepare the dask-gdf dataframes
+        self.data = self.data.to_dask_gdf(self.dask_env.nworkers)
 
 
 class XgbBenchmark(Benchmark):

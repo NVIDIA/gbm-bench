@@ -309,8 +309,7 @@ benchmarks = {
                           objective="gpu:binary:logistic", benchmark_cls=XgbGdfBenchmark)),
     "xgb-dask-gpu": (True, PlanetBenchmark, metrics,
                      dict(xgb_common_params, tree_method="gpu_hist", max_bins=63,
-                          objective="gpu:binary:logistic", benchmark_cls=XgbDaskBenchmark,
-                          n_gpus=1)),
+                          objective="gpu:binary:logistic", benchmark_cls=XgbDaskBenchmark)),
 
     "lgbm-cpu":     (True, PlanetBenchmark, metrics,
                      dict(lgb_common_params, nthread=nthreads)),
