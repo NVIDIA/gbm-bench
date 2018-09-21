@@ -126,7 +126,7 @@ your flow accordingly.
 
 ## Running a benchmark
 ```bash
-  $ ./dockerfiles/scripts/launch -user gbm-bench:latest-9.2 /bin/bash
+  $ ./dockerfiles/scripts/launch -runas user gbm-bench:latest-9.2 /bin/bash
   user@container$ cd /work/gbm-bench
   user@container$ ./runme.py -root ../gbm-datasets -dataset football
   user@container$ exit
@@ -135,7 +135,7 @@ your flow accordingly.
 
 ## Running all benchmarks and comparing results
 ```bash
-  $ ./dockerfiles/scripts/launch -user gbm-bench:latest-9.2 /bin/bash
+  $ ./dockerfiles/scripts/launch -runas user gbm-bench:latest-9.2 /bin/bash
   user@container$ cd /work/gbm-bench
   # This generates a benchmark_5_100.csv containing runtime/perf numbers
   # This also logs all the output inside output_5_100.log
