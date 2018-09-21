@@ -16,7 +16,9 @@ datasets used here are the same as in the above repo.
 
   # this project
   $ cd ../..
-  $ git clone https://github.com/NVIDIA/gradient-boosted-benchmarks
+  $ git clone git@gitlab.com:nvdevtech/gbm-bench.git
+  # The below link will be made active once we open-source this work
+  # $ git clone https://github.com/NVIDIA/gradient-boosted-benchmarks
 
   $ cd ..
   # Download the datasets as described in the next section.
@@ -124,7 +126,7 @@ your flow accordingly.
 
 ## Running a benchmark
 ```bash
-  $ ./dockerfiles/scripts/launch -user gbm-bench:latest-9.0 /bin/bash
+  $ ./dockerfiles/scripts/launch -user gbm-bench:latest-9.2 /bin/bash
   user@container$ cd /work/gbm-bench
   user@container$ ./runme.py -root ../gbm-datasets -dataset football
   user@container$ exit
@@ -133,7 +135,7 @@ your flow accordingly.
 
 ## Running all benchmarks and comparing results
 ```bash
-  $ ./dockerfiles/scripts/launch -user gbm:latest /bin/bash
+  $ ./dockerfiles/scripts/launch -user gbm-bench:latest-9.2 /bin/bash
   user@container$ cd /work/gbm-bench
   # This generates a benchmark_5_100.csv containing runtime/perf numbers
   # This also logs all the output inside output_5_100.log
