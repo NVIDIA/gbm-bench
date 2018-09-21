@@ -101,8 +101,8 @@ class Data:
         #print(X_test_dgdf.columns)
         y_train_dgdf = dgdf.from_dask_dataframe(d1.y_train)
         y_test_dgdf = dgdf.from_dask_dataframe(d1.y_test)
-        # X_train_dgdf, X_test_dgdf, y_train_dgdf, y_test_dgdf = dask.persist(
-        #     X_train_dgdf, X_test_dgdf, y_train_dgdf, y_test_dgdf)
+        X_train_dgdf, X_test_dgdf, y_train_dgdf, y_test_dgdf = dask.persist(
+            X_train_dgdf, X_test_dgdf, y_train_dgdf, y_test_dgdf)
         return Data(X_train_dgdf, X_test_dgdf, y_train_dgdf, y_test_dgdf)
 
     def y_test_matrix(self):
@@ -181,9 +181,17 @@ class DaskEnv:
         self.nworkers = params['nworkers']
 
     def start(self):
+        # output redirect
+        output = subprocess.DEVNULL
+        if 'verbose' in self.params and self.params['verbose'] > 0:
+            # setting output to None inherits the descriptors
+            # of the parent process
+            output = None
+        
         # start the scheduler
         self.scheduler = subprocess.Popen(
-            ['dask-scheduler', '--port=8787', '--host=127.0.0.1'])
+            ['dask-scheduler', '--port=8787', '--host=127.0.0.1'],
+            stdout=output, stderr=output)
         time.sleep(1)
         # start the workers with the right devices
         ram_fraction = 1.0 / self.nworkers
@@ -193,7 +201,7 @@ class DaskEnv:
             env.update({'CUDA_VISIBLE_DEVICES': '%d' % i})
             self.workers.append(subprocess.Popen(
                 ['dask-worker',  '127.0.0.1:8787', '--memory-limit=%.3f' % ram_fraction,
-                 '--nprocs=1', '--nthreads=1'], env=env))
+                 '--nprocs=1', '--nthreads=1'], env=env, stdout=output, stderr=output))
         time.sleep(1)
 
     def stop(self):
@@ -214,13 +222,16 @@ class XgbDaskBenchmark(Benchmark):
         # 'distributed_dask' must be True
         self.params['distributed_dask']  = True
         # interpret GPUs as the number of workers
-        self.params['nworkers'] = self.params['n_gpus']
+        self.params['dask_nworkers'] = self.params['n_gpus']
         self.params['n_gpus'] = 1
 
     def __enter__(self):
         Benchmark.__enter__(self)
         # set up the dask environment
-        self.dask_env = DaskEnv({'nworkers': self.params['nworkers']})
+        self.dask_env = DaskEnv({
+            'nworkers': self.params['dask_nworkers'],
+            'verbose': self.params['debug_verbose'] if 'debug_verbose' in self.params else 0
+        })
         self.dask_env.start()
         self.client = dd.Client(self.ip_port)
 

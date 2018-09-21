@@ -124,8 +124,8 @@ def benchmark(dbFolder, module, benchmarks, extra_params, nrows):
             (prepare_time, train_time, test_time) = runner.run()
             y_test = runner.y_test_matrix()
             y_pred = runner.y_pred
-            print(type(y_test))
-            print(type(y_pred))
+            #print(type(y_test))
+            #print(type(y_pred))
             results[name] = {
                 "prepare_time": prepare_time,
                 "train_time": train_time,
