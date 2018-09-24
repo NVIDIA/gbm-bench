@@ -270,6 +270,12 @@ class XgbDaskGdfBenchmark(XgbDaskBenchmark):
         # prepare the dask-gdf dataframes
         self.data = self.data.to_dask_gdf(self.dask_env.nworkers)
 
+    def test(self):
+        self.y_pred = dxgb.predict(
+            self.client, self.model, self.data.X_test).persist()
+        # merge the predictions in host memory, in case the dataset is large
+        self.y_pred = self.y_pred.to_dask_dataframe().compute()
+
 
 class XgbBenchmark(Benchmark):
     def prepare(self):
