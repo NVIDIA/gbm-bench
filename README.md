@@ -161,10 +161,10 @@ Here are the steps involved in doing so:
 * Then create a map named benchmarks in the following format:
 ```python
 benchmarks = {
+    "xgb-cpu-exact": (Enabled, BenchmarkClass, metricsFunc, params),
     "xgb-cpu": (Enabled, BenchmarkClass, metricsFunc, params),
-    "xgb-cpu-hist": (Enabled, BenchmarkClass, metricsFunc, params),
+    "xgb-gpu-exact": (Enabled, BenchmarkClass, metricsFunc, params),
     "xgb-gpu": (Enabled, BenchmarkClass, metricsFunc, params),
-    "xgb-gpu-hist": (Enabled, BenchmarkClass, metricsFunc, params),
     "lgbm-cpu": (Enabled, BenchmarkClass, metricsFunc, params),
     "lgbm-gpu": (Enabled, BenchmarkClass, metricsFunc, params),
     "cat-cpu": (Enabled, BenchmarkClass, metricsFunc, params),
