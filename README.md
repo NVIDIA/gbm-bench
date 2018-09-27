@@ -35,7 +35,7 @@ At first, create a root folder which contains all the datasets that will be
 downloaded here. Let's calls it 'gbm-datasets'. From here onwards, unless
 otherwise mentioned, all folders and paths will be wrt this root folder only.
 ```bash
-$ mkdir boosting-datasets
+$ mkdir gbm-datasets
 ```
 
 ## Airline
