@@ -43,10 +43,10 @@ def parseArgs():
     parser.add_argument("-benchmarks", default="all", type=str,
                         help=("Comma-separated list of benchmarks to run; "
                               "'all' run all"))
-    parser.add_argument("-ngpus", default=1, type=int,
+    parser.add_argument("-gpus", default=1, type=int,
                         help=("#GPUs to use for the benchmarks; "
                               "ignored when not supported"))
-    parser.add_argument("-ncpus", default=0, type=int,
+    parser.add_argument("-cpus", default=0, type=int,
                         help=("#CPUs to use for the benchmarks; "
                               "0 means multiprocessing.cpu_count()"))
     parser.add_argument("-output", default=None, type=str,
@@ -140,14 +140,14 @@ def benchmark(dbFolder, module, benchmarks, extra_params, nrows):
 
 def main():
     args = parseArgs()
-    if args.ncpus > 0:
-        utils.number_processors_override = args.ncpus
+    if args.cpus > 0:
+        utils.number_processors_override = args.cpus
     utils.print_sys_info()
     folder = os.path.join(args.root, args.dataset)
     benchmarks = args.benchmarks.split(",")
     # TODO: this is a HACK to support dynamic loading of modules at runtime!
     module = __import__(args.dataset)
-    extra_params = {"n_gpus": args.ngpus}
+    extra_params = {"n_gpus": args.gpus}
     if args.maxdepth is not None:
         extra_params["maxdepth"] = args.maxdepth
     if args.ntrees is not None:

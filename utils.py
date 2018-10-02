@@ -202,10 +202,10 @@ class DaskEnv:
             self.workers.append(subprocess.Popen(
                 ['dask-worker',  '127.0.0.1:8787', '--memory-limit=%.3f' % ram_fraction,
                  '--nprocs=1', '--nthreads=1'], env=env, stdout=output, stderr=output))
-        time.sleep(1)
+        time.sleep(2)
 
     def stop(self):
-        time.sleep(1)
+        time.sleep(2)
         for i in range(self.nworkers):
             self.workers[i].kill()
         self.scheduler.kill()
