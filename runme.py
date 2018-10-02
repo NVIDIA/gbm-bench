@@ -67,6 +67,7 @@ def parseArgs():
                         help="Extra arguments as a python dictionary")
     parser.add_argument("-warmup", action="store_true",
                         help=("Whether to run a small benchmark (fraud) as a warmup"))
+    parser.add_argument("-verbose", action="store_true", help="Produce verbose output")
     args = parser.parse_args()
     # default value for output json file
     if not args.output:
@@ -96,6 +97,8 @@ def addExtraParams(params, extraParams, bName):
             params["num_round"] = extraParams["ntrees"]
         elif "cat" in bName:
             params["iterations"] = extraParams["ntrees"]
+    if "verbose" in extraParams:
+        params["debug_verbose"] = 1 if extraParams["verbose"] else 0
     # if need to pass other parameters directly to the benchmark
     if "extra" in extraParams:
         params.update(extraParams["extra"])
@@ -150,6 +153,7 @@ def main():
     if args.ntrees is not None:
         extra_params["ntrees"] = args.ntrees
     extra_params["extra"] = ast.literal_eval(args.extra)
+    extra_params["verbose"] = args.verbose
     if args.warmup:
         warmup_extra_params = {"n_gpus": args.ngpus}
         benchmark(os.path.join(args.root, "fraud"), __import__("fraud"),
