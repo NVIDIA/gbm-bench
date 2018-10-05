@@ -83,16 +83,6 @@ class Data:
             X_train_dask, X_test_dask, y_train_dask, y_test_dask)
         return Data(X_train_dask, X_test_dask, y_train_dask, y_test_dask)
 
-    # def to_dask_gdf(self, nworkers):
-    #     d1 = self.to_gdf()
-    #     X_train_dgdf = dgdf.from_pygdf(d1.X_train, npartitions=nworkers)
-    #     X_test_dgdf = dgdf.from_pygdf(d1.X_test, npartitions=nworkers)
-    #     y_train_dgdf = dgdf.from_pygdf(d1.y_train, npartitions=nworkers)
-    #     y_test_dgdf = dgdf.from_pygdf(d1.y_test, npartitions=nworkers)
-    #     X_train_dgdf, X_test_dgdf, y_train_dgdf, y_test_dgdf = dask.persist(
-    #         X_train_dgdf, X_test_dgdf, y_train_dgdf, y_test_dgdf)
-    #     return Data(X_train_dgdf, X_test_dgdf, y_train_dgdf, y_test_dgdf)
-
     def to_dask_gdf(self, nworkers):
         d1 = self.to_dask(nworkers)
         X_train_dgdf = dgdf.from_dask_dataframe(d1.X_train)
@@ -104,6 +94,12 @@ class Data:
         X_train_dgdf, X_test_dgdf, y_train_dgdf, y_test_dgdf = dask.persist(
             X_train_dgdf, X_test_dgdf, y_train_dgdf, y_test_dgdf)
         return Data(X_train_dgdf, X_test_dgdf, y_train_dgdf, y_test_dgdf)
+
+    def dask_wait(self):
+        dd.wait(self.X_train)
+        dd.wait(self.X_test)
+        dd.wait(self.y_train)
+        dd.wait(self.y_test)
 
     def y_test_matrix(self):
         y = self.y_test
@@ -238,6 +234,7 @@ class XgbDaskBenchmark(Benchmark):
     def df_prepare(self):
         # prepare the dask dataframes
         self.data = self.data.to_dask(self.dask_env.nworkers)
+        self.data.dask_wait()
 
     def train(self):
         bst = dxgb.train(self.client, self.params, self.data.X_train,
@@ -253,6 +250,7 @@ class XgbDaskBenchmark(Benchmark):
     def test(self):
         self.y_pred = dxgb.predict(
             self.client, self.model, self.data.X_test).persist().compute()
+        dd.wait(self.y_pred)
 
     def __exit__(self, exc_type, exc_value, traceback):
         self.client.close()
@@ -269,12 +267,14 @@ class XgbDaskGdfBenchmark(XgbDaskBenchmark):
     def df_prepare(self):
         # prepare the dask-gdf dataframes
         self.data = self.data.to_dask_gdf(self.dask_env.nworkers)
+        self.data.dask_wait()
 
     def test(self):
         self.y_pred = dxgb.predict(
             self.client, self.model, self.data.X_test).persist()
         # merge the predictions in host memory, in case the dataset is large
         self.y_pred = self.y_pred.to_dask_dataframe().compute()
+        dd.wait(self.y_pred)
 
 
 class XgbBenchmark(Benchmark):
