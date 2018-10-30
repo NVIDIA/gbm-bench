@@ -39,7 +39,7 @@ import dask_xgboost as dxgb
 import lightgbm as lgb
 import numpy as np
 import pandas as pd
-import pygdf.dataframe as gdf
+import cudf.dataframe as gdf
 import xgboost as xgb
 
 from metrics import *
