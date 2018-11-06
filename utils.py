@@ -186,7 +186,7 @@ class DaskEnv:
         
         # start the scheduler
         self.scheduler = subprocess.Popen(
-            ['dask-scheduler', '--port=8787', '--host=127.0.0.1'],
+            ['dask-scheduler', '--port=8786', '--host=127.0.0.1'],
             stdout=output, stderr=output)
         time.sleep(1)
         # start the workers with the right devices
@@ -196,8 +196,12 @@ class DaskEnv:
             env = os.environ.copy()
             env.update({'CUDA_VISIBLE_DEVICES': '%d' % i})
             self.workers.append(subprocess.Popen(
-                ['dask-worker',  '127.0.0.1:8787', '--memory-limit=%.3f' % ram_fraction,
-                 '--nprocs=1', '--nthreads=1'], env=env, stdout=output, stderr=output))
+                ['dask-worker',
+                 '127.0.0.1:8786',
+                 '--no-nanny',
+                 '--memory-limit=%.3f' % ram_fraction,
+                 '--nprocs=1', '--nthreads=1'],
+                env=env, stdout=output, stderr=output))
         time.sleep(2)
 
     def stop(self):
@@ -210,7 +214,7 @@ class DaskEnv:
 # runs the benchmark using dask-xgboost
 class XgbDaskBenchmark(Benchmark):
     dask_env = None
-    ip_port = '127.0.0.1:8787'  # ip:port for the Client
+    ip_port = '127.0.0.1:8786'  # ip:port for the Client
     client = None
 
     def __init__(self, data, params):
