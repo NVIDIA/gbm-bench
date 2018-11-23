@@ -31,28 +31,28 @@ import sys
 import time
 
 import catboost as cat
+import cudf as cudf
 import dask as dask
 import dask.dataframe as ddf
 import dask.distributed as dd
-import dask_gdf as dgdf
+import dask_cudf as dcudf
 import dask_xgboost as dxgb
 import lightgbm as lgb
 import numpy as np
 import pandas as pd
-import cudf.dataframe as gdf
 import xgboost as xgb
 
 from metrics import *
 
-# convert an object to GDF
-def to_gdf(obj):
+# convert an object to CUDF
+def to_cudf(obj):
     if isinstance(obj, pd.DataFrame):
-        return gdf.DataFrame.from_pandas(obj)
+        return cudf.DataFrame.from_pandas(obj)
     elif isinstance(obj, pd.Series):
-        return gdf.DataFrame.from_pandas(obj.to_frame())
-    elif isinstance(obj, gdf.DataFrame):
+        return cudf.DataFrame.from_pandas(obj.to_frame())
+    elif isinstance(obj, cudf.DataFrame):
         return obj
-    elif isinstance(obj, gdf.Series):
+    elif isinstance(obj, cudf.Series):
         return obj
     raise ValueError('type %s not supported' % type(obj))
 
@@ -65,12 +65,12 @@ class Data:
         self.y_train = y_train
         self.y_test = y_test
 
-    def to_gdf(self):
-        X_train_gdf = to_gdf(self.X_train)
-        X_test_gdf = to_gdf(self.X_test)
-        y_train_gdf = to_gdf(self.y_train)
-        y_test_gdf = to_gdf(self.y_test)
-        return Data(X_train_gdf, X_test_gdf, y_train_gdf, y_test_gdf)
+    def to_cudf(self):
+        X_train_cudf = to_cudf(self.X_train)
+        X_test_cudf = to_cudf(self.X_test)
+        y_train_cudf = to_cudf(self.y_train)
+        y_test_cudf = to_cudf(self.y_test)
+        return Data(X_train_cudf, X_test_cudf, y_train_cudf, y_test_cudf)
 
     def to_dask(self, nworkers):
         X_train_dask = ddf.from_pandas(self.X_train, npartitions=nworkers)
@@ -83,17 +83,17 @@ class Data:
             X_train_dask, X_test_dask, y_train_dask, y_test_dask)
         return Data(X_train_dask, X_test_dask, y_train_dask, y_test_dask)
 
-    def to_dask_gdf(self, nworkers):
+    def to_dask_cudf(self, nworkers):
         d1 = self.to_dask(nworkers)
-        X_train_dgdf = dgdf.from_dask_dataframe(d1.X_train)
-        #print(X_train_dgdf.columns)
-        X_test_dgdf = dgdf.from_dask_dataframe(d1.X_test)
-        #print(X_test_dgdf.columns)
-        y_train_dgdf = dgdf.from_dask_dataframe(d1.y_train)
-        y_test_dgdf = dgdf.from_dask_dataframe(d1.y_test)
-        X_train_dgdf, X_test_dgdf, y_train_dgdf, y_test_dgdf = dask.persist(
-            X_train_dgdf, X_test_dgdf, y_train_dgdf, y_test_dgdf)
-        return Data(X_train_dgdf, X_test_dgdf, y_train_dgdf, y_test_dgdf)
+        X_train_dcudf = dcudf.from_dask_dataframe(d1.X_train)
+        #print(X_train_dcudf.columns)
+        X_test_dcudf = dcudf.from_dask_dataframe(d1.X_test)
+        #print(X_test_dcudf.columns)
+        y_train_dcudf = dcudf.from_dask_dataframe(d1.y_train)
+        y_test_dcudf = dcudf.from_dask_dataframe(d1.y_test)
+        X_train_dcudf, X_test_dcudf, y_train_dcudf, y_test_dcudf = dask.persist(
+            X_train_dcudf, X_test_dcudf, y_train_dcudf, y_test_dcudf)
+        return Data(X_train_dcudf, X_test_dcudf, y_train_dcudf, y_test_dcudf)
 
     def dask_wait(self):
         dd.wait(self.X_train)
@@ -103,13 +103,13 @@ class Data:
 
     def y_test_matrix(self):
         y = self.y_test
-        if isinstance(y, gdf.DataFrame):
+        if isinstance(y, cudf.DataFrame):
             return y.as_matrix()
-        elif isinstance(y, gdf.Series):
+        elif isinstance(y, cudf.Series):
             return y.to_array()
         elif isinstance(y, (ddf.DataFrame, ddf.Series)):
             return y.persist().compute()
-        elif isinstance(y, (dgdf.DataFrame, dgdf.Series)):
+        elif isinstance(y, (dcudf.DataFrame, dcudf.Series)):
             return y.to_dask_dataframe().persist().compute()
         return y
 
@@ -132,7 +132,7 @@ class Benchmark:
             del self.model
 
     def run(self):
-        # preparing the df: converting them to GDF if necessary; this is not timed
+        # preparing the df: converting them to CUDF if necessary; this is not timed
         self.df_prepare()
         
         # preparing; calling DMatrix ctors for train and test
@@ -263,14 +263,14 @@ class XgbDaskBenchmark(Benchmark):
         Benchmark.__exit__(self, exc_type, exc_value, traceback)
 
 
-class XgbDaskGdfBenchmark(XgbDaskBenchmark):
+class XgbDaskCudfBenchmark(XgbDaskBenchmark):
 
     def __init__(self, data, params):
         XgbDaskBenchmark.__init__(self, data, params)
 
     def df_prepare(self):
-        # prepare the dask-gdf dataframes
-        self.data = self.data.to_dask_gdf(self.dask_env.nworkers)
+        # prepare the dask-cudf dataframes
+        self.data = self.data.to_dask_cudf(self.dask_env.nworkers)
         self.data.dask_wait()
 
     def test(self):
@@ -298,10 +298,10 @@ class XgbBenchmark(Benchmark):
         Benchmark.__exit__(self, exc_type, exc_value, traceback)
 
 
-class XgbGdfBenchmark(XgbBenchmark):
+class XgbCudfBenchmark(XgbBenchmark):
     def df_prepare(self):
         XgbBenchmark.df_prepare(self)
-        self.data = self.data.to_gdf()
+        self.data = self.data.to_cudf()
 
 
 class LgbBenchmark(Benchmark):
