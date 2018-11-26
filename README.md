@@ -9,16 +9,11 @@ datasets used here are the same as in the above repo.
   # make sure that you have CUDA SDK (or atleast nvidia driver) installed
   # install docker and nvidia-docker, first
 
-  # dockerfiles github project is needed to build the docker image
-  $ git clone https://github.com/teju85/dockerfiles
-  $ cd dockerfiles/ubuntu1604
-  $ make gbm-bench92
-
-  # this project
-  $ cd ../..
   $ git clone git@gitlab.com:nvdevtech/gbm-bench.git
   # The below link will be made active once we open-source this work
   # $ git clone https://github.com/NVIDIA/gradient-boosted-benchmarks
+  $ cd gbm-bench
+  $ docker build -t gbm-bench:9.2 .
 
   $ cd ..
   # Download the datasets as described in the next section.
@@ -78,7 +73,7 @@ it could take quite sometime to 'prepare' the dataset to be passed to GBM algos!
 
 ## Fraud Detection
 Credit Card Fraud Detection Kaggle competition as found here:
-https://www.kaggle.com/dalpozz/creditcardfraud. Download the creditcardfraud.zip
+https://www.kaggle.com/mlg-ulb/creditcardfraud. Download the creditcardfraud.zip
 from this page into a folder named 'fraud'.
 
 ## Higgs dataset
@@ -124,23 +119,25 @@ This section assumes that one has elevated permissions on the system where this
 docker image will be run for benchmarking! In case this is not true, update
 your flow accordingly.
 
-## Running a benchmark
+## Launching container
 ```bash
-  $ ./dockerfiles/scripts/launch -runas user gbm-bench:latest-9.2 /bin/bash
-  user@container$ cd /work/gbm-bench
+  $ nvidia-docker run -it -rm -v `pwd`/../gbm-datasets:/opt/gbm-datasets gbm-bench:9.2 /bin/bash
+```
+Basically, make sure that you have mounted the datasets directory inside the container.
+
+## Running a dataset
+```bash
+  user@container$ cd /opt/gbm-bench
   user@container$ ./runme.py -root ../gbm-datasets -dataset football
-  user@container$ exit
-  $ cat ./gbm-bench/football.json
+  user@container$ cat ./gbm-bench/football.json
 ```
 
-## Running all benchmarks and comparing results
+## Running all datasets and benchmarks to compare results
 ```bash
-  $ ./dockerfiles/scripts/launch -runas user gbm-bench:latest-9.2 /bin/bash
-  user@container$ cd /work/gbm-bench
+  user@container$ cd /opt/gbm-bench
   # This generates a benchmark_5_100.csv containing runtime/perf numbers
   # This also logs all the output inside output_5_100.log
   user@container$ make MAXDEPTH=5 NTREES=100 runAll
-  user@container$ ./gbm-bench/info.sh   # to get machine-info
 ```
 
 # Adding a new dataset?
@@ -181,6 +178,16 @@ benchmarks = {
 * Add a line inside Makefile under '_runAll' target to benchmark this particular
   dataset as well.
 
+# Trouble shooting
+## [LightGBM] [Warning] boost::filesystem::create_directories: Permission denied: ...
+```bash
+export BOOST_COMPUTE_USE_OFFLINE_CACHE=0
+```
+Reference: Issue [here](https://github.com/Microsoft/LightGBM/issues/1531)
+
+## Warning! catboost sets max-thread-count to 56!
+Pass a `-cpus 56` option to the 'runme.py'
+
 # Adding a new library to benchmark?
 Here are the steps involved in doing so:
 * Open utils.py
@@ -188,11 +195,11 @@ Here are the steps involved in doing so:
 * Customize/Overwrite the methods as per this library's needs
 
 # Yet another boosting tree benchmark?
-* This is more scriptable version (eg: for automated benchmarking)
+* This is more scriptable (and configurable) version (eg: for automated benchmarking)
 * Also adds CatBoost to the comparison list
 * Tries to keep the boosting hyper-params the same across frameworks for a fair
-  comparison
-* Supports multi-GPU benchmarking (assuming underlying framework allows)
+  comparison. Reference: [this paper](https://openreview.net/pdf?id=ryexWdLRtm)
+* Supports multi-GPU as well as multi-node benchmarking (assuming underlying framework allows)
 
 # Third party codes and licensing
 The third party codes which we borrowed from, and their license texts, are released

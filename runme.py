@@ -97,7 +97,7 @@ def addExtraParams(params, extraParams, bName):
             params["num_round"] = extraParams["ntrees"]
         elif "cat" in bName:
             params["iterations"] = extraParams["ntrees"]
-    if "verbose" in extraParams:
+    if "verbose" in extraParams and ("xgb" in bName or "rf" in bName):
         params["debug_verbose"] = 1 if extraParams["verbose"] else 0
     # if need to pass other parameters directly to the benchmark
     if "extra" in extraParams:

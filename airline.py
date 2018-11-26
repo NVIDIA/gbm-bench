@@ -154,26 +154,35 @@ benchmarks = {
     "xgb-cpu":       (True, XgbBenchmark, metrics,
                       dict(xgb_common_params, nthread=nthreads,
                            grow_policy="lossguide", tree_method="hist")),
-    "xgb-gpu-exact": (True, XgbBenchmark, metrics,
+    # Illegal memory accesses encountered! [11/26/2018]
+    "xgb-gpu-exact": (False, XgbBenchmark, metrics,
                       dict(xgb_common_params, tree_method="gpu_exact",
                            objective="gpu:binary:logistic")),
     "xgb-gpu":       (True, XgbBenchmark, metrics,
                       dict(xgb_common_params, tree_method="gpu_hist",
                            objective="gpu:binary:logistic")),
-    "xgb-cudf-exact": (True, XgbCudfBenchmark, metrics,
+    # Illegal memory accesses encountered! [11/26/2018]
+    "xgb-cudf-exact": (False, XgbCudfBenchmark, metrics,
                       dict(xgb_common_params, tree_method="gpu_exact",
                            objective="gpu:binary:logistic")),
-    "xgb-cudf":       (True, XgbCudfBenchmark, metrics,
+    # TypeError: no supported conversion for types: (dtype('O'),) [11/26/2018]
+    "xgb-cudf":       (False, XgbCudfBenchmark, metrics,
                       dict(xgb_common_params, tree_method="gpu_hist",
                            objective="gpu:binary:logistic")),
-    "xgb-dask-gpu":  (True, XgbDaskBenchmark, metrics,
+    # Doing rabit call after Finalize
+    # (and the whole benchmark just stops running!)
+    # [11/26/2018]
+    "xgb-dask-gpu":  (False, XgbDaskBenchmark, metrics,
                       dict(xgb_common_params, tree_method="gpu_hist",
                            objective="gpu:binary:logistic")),
-    "xgb-dask-cudf": (True, XgbDaskCudfBenchmark, metrics,
+    # TypeError: Data must be either numpy arrays or pandas dataframes. Got <class 'cudf.dataframe.DataFrame'>
+    # [11/26/2018]
+    "xgb-dask-cudf": (False, XgbDaskCudfBenchmark, metrics,
                      dict(xgb_common_params, tree_method="gpu_hist",
                           objective="gpu:binary:logistic")),
 
-    "rf-gpu-exact":  (True, XgbBenchmark, metrics,
+    # Illegal memory accesses encountered! [11/26/2018]
+    "rf-gpu-exact":  (False, XgbBenchmark, metrics,
                       dict(rf_common_params, tree_method="gpu_exact",
                            objective="gpu:binary:logistic")),
     "rf-gpu":        (True, XgbBenchmark, metrics,
@@ -182,7 +191,10 @@ benchmarks = {
 
     "lgbm-cpu":      (True, LgbBenchmark, metrics,
                       dict(lgb_common_params, nthread=nthreads)),
-    "lgbm-gpu":      (True, LgbBenchmark, metrics,
+    # [LightGBM] [Warning] boost::filesystem::create_directories: Permission denied: "//.boost_compute/f1"
+    # even after setting BOOST_COMPUTE_USE_OFFLINE_CACHE=0!
+    # [11/26/2018]
+    "lgbm-gpu":      (False, LgbBenchmark, metrics,
                       dict(lgb_common_params, device="gpu")),
 
     "cat-cpu":       (True, CatBenchmark, catMetrics,
