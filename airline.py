@@ -105,7 +105,6 @@ nTrees = 100
 xgb_common_params = {
     "eta":               0.1,
     "gamma":             0.1,
-    "learning_rate":     0.1,
     "max_depth":         8,
     "max_leaves":        2**8,
     "min_child_weight":  30,
@@ -138,13 +137,24 @@ cat_common_params = {
 
 rf_common_params = dict(xgb_common_params)
 rf_common_params.update({
-    "colsample_bytree":  0.8,
+    "colsample_bynode":  0.8,
     "eta":               1.0,
     "num_parallel_tree": nTrees,
     "num_round":         1,
     "random_state":      42,
     "subsample":         0.8,
 })
+
+skl_rf_params = {
+    "criterion": "entropy",
+    "max_depth": 8,
+    "max_features": 0.8,
+    "max_leaf_nodes": 2**8,
+    "min_samples_leaf": 30,
+    "n_estimators": nTrees,
+    "n_jobs": nthreads,
+    "random_state": 42,
+}
 
 
 benchmarks = {
@@ -182,13 +192,13 @@ benchmarks = {
                           objective="gpu:binary:logistic")),
 
     # Illegal memory accesses encountered! [11/26/2018]
-    "rf-gpu-exact":  (False, XgbBenchmark, metrics,
+    "xgb-rf-gpu-exact":  (False, XgbBenchmark, metrics,
                       dict(rf_common_params, tree_method="gpu_exact",
                            objective="gpu:binary:logistic")),
-    "rf-gpu":        (True, XgbBenchmark, metrics,
+    "xgb-rf-gpu":        (True, XgbBenchmark, metrics,
                       dict(rf_common_params, tree_method="gpu_hist",
                            objective="gpu:binary:logistic")),
-
+    "skl-rf":        (True, SklRfClassificationBenchmark, metrics, skl_rf_params),
     "lgbm-cpu":      (True, LgbBenchmark, metrics,
                       dict(lgb_common_params, nthread=nthreads)),
     # [LightGBM] [Warning] boost::filesystem::create_directories: Permission denied: "//.boost_compute/f1"

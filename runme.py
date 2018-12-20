@@ -78,27 +78,36 @@ def parseArgs():
 def addExtraParams(params, extraParams, bName):
     # multi gpu case
     if "n_gpus" in extraParams:
-        if "xgb" in bName or "rf" in bName:
+        if "xgb" in bName:
             params["n_gpus"] = extraParams["n_gpus"]
         else:
-            print("'n_gpus' currently only applies to 'xgboost'")
+            print("ignoring 'n_gpus': 'n_gpus' currently only applies to 'xgboost'")
     # if need to customize tree depth
     if "maxdepth" in extraParams:
-        if "xgb" in bName or "rf" in bName:
+        if "xgb" in bName:
             params["max_depth"] = extraParams["maxdepth"]
             params["max_leaves"] = 2**extraParams["maxdepth"]
         elif "lgbm" in bName:
             params["num_leaves"] = 2**extraParams["maxdepth"]
         elif "cat" in bName:
             params["depth"] = extraParams["maxdepth"]
-    # if need to customize number of boosters
+        elif "skl" in bName:
+            params["max_depth"] = extraParams["maxdepth"]
+            params["max_leaf_nodes"] = 2**extraParams["maxdepth"]
+            # if need to customize number of boosters
     if "ntrees" in extraParams:
-        if "xgb" in bName or "rf" in bName or "lgbm" in bName:
+        if "xgb" in bName or "lgbm" in bName:
             params["num_round"] = extraParams["ntrees"]
         elif "cat" in bName:
             params["iterations"] = extraParams["ntrees"]
-    if "verbose" in extraParams and ("xgb" in bName or "rf" in bName):
-        params["debug_verbose"] = 3 if extraParams["verbose"] else 0
+        elif "skl" in bName:
+            params["n_estimators"] = extraParams["ntrees"]
+    if "verbose" in extraParams:
+        if "xgb" in bName:
+            params["debug_verbose"] = 3 if extraParams["verbose"] else 0
+        elif "skl" in bName:
+            params["verbose"] = 2 if extraParams["verbose"] else 0
+
     # if need to pass other parameters directly to the benchmark
     if "extra" in extraParams:
         params.update(extraParams["extra"])
@@ -155,7 +164,7 @@ def main():
     extra_params["extra"] = ast.literal_eval(args.extra)
     extra_params["verbose"] = args.verbose
     if args.warmup:
-        warmup_extra_params = {"n_gpus": args.ngpus}
+        warmup_extra_params = {"n_gpus": args.gpus}
         benchmark(os.path.join(args.root, "fraud"), __import__("fraud"),
                   benchmarks, warmup_extra_params, args.nrows)
     results = benchmark(folder, module, benchmarks, extra_params, args.nrows)

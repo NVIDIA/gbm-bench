@@ -40,6 +40,7 @@ import dask_xgboost as dxgb
 import lightgbm as lgb
 import numpy as np
 import pandas as pd
+from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 import xgboost as xgb
 
 from metrics import *
@@ -279,6 +280,34 @@ class XgbDaskCudfBenchmark(XgbDaskBenchmark):
         # merge the predictions in host memory, in case the dataset is large
         self.y_pred = self.y_pred.to_dask_dataframe().compute()
         dd.wait(self.y_pred)
+
+class SklRfBenchmark(Benchmark):
+
+    # RandomForest{Classifier,Regressor}, must be set in a derived class
+    cls = None
+
+    def train(self):
+        self.model = self.cls(**self.params)
+        self.model.fit(self.data.X_train, self.data.y_train)
+
+
+class SklRfClassificationBenchmark(SklRfBenchmark):
+
+    cls = RandomForestClassifier
+
+    def test(self):
+        self.y_pred = self.model.predict_proba(self.data.X_test)
+        # single output in case of 2 classes
+        if self.model.n_classes_ == 2:
+            self.y_pred = self.y_pred[:, 1]
+
+
+class SklRfRegressionBenchmark(SklRfBenchmark):
+
+    cls = RandomForestRegressor
+
+    def test(self):
+        self.y_pred = self.model.predict(self.data.X_test)
 
 
 class XgbBenchmark(Benchmark):
