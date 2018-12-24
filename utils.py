@@ -31,6 +31,7 @@ import sys
 import time
 
 import catboost as cat
+import dask
 import dask.dataframe as ddf
 import dask.distributed as dd
 import dask_xgboost as dxgb
@@ -67,14 +68,8 @@ class Data:
 
     def y_test_matrix(self):
         y = self.y_test
-        if isinstance(y, cudf.DataFrame):
-            return y.as_matrix()
-        elif isinstance(y, cudf.Series):
-            return y.to_array()
-        elif isinstance(y, (ddf.DataFrame, ddf.Series)):
+        if isinstance(y, (ddf.DataFrame, ddf.Series)):
             return y.persist().compute()
-        elif isinstance(y, (dcudf.DataFrame, dcudf.Series)):
-            return y.to_dask_dataframe().persist().compute()
         return y
 
 
