@@ -31,11 +31,8 @@ import sys
 import time
 
 import catboost as cat
-import cudf as cudf
-import dask as dask
 import dask.dataframe as ddf
 import dask.distributed as dd
-import dask_cudf as dcudf
 import dask_xgboost as dxgb
 import lightgbm as lgb
 import numpy as np
@@ -45,19 +42,6 @@ import xgboost as xgb
 
 from metrics import *
 
-# convert an object to CUDF
-def to_cudf(obj):
-    if isinstance(obj, pd.DataFrame):
-        return cudf.DataFrame.from_pandas(obj)
-    elif isinstance(obj, pd.Series):
-        return cudf.DataFrame.from_pandas(obj.to_frame())
-    elif isinstance(obj, cudf.DataFrame):
-        return obj
-    elif isinstance(obj, cudf.Series):
-        return obj
-    raise ValueError('type %s not supported' % type(obj))
-
-
 # just a container for (X|y)_(train,test)
 class Data:
     def __init__(self, X_train, X_test, y_train, y_test):
@@ -66,35 +50,14 @@ class Data:
         self.y_train = y_train
         self.y_test = y_test
 
-    def to_cudf(self):
-        X_train_cudf = to_cudf(self.X_train)
-        X_test_cudf = to_cudf(self.X_test)
-        y_train_cudf = to_cudf(self.y_train)
-        y_test_cudf = to_cudf(self.y_test)
-        return Data(X_train_cudf, X_test_cudf, y_train_cudf, y_test_cudf)
-
     def to_dask(self, nworkers):
         X_train_dask = ddf.from_pandas(self.X_train, npartitions=nworkers)
         X_test_dask = ddf.from_pandas(self.X_test, npartitions=nworkers)
-        # y_train_dask = ddf.from_pandas(self.y_train, npartitions=nworkers)
-        # y_test_dask = ddf.from_pandas(self.y_test, npartitions=nworkers)
         y_train_dask = ddf.from_pandas(self.y_train.to_frame(), npartitions=nworkers)
         y_test_dask = ddf.from_pandas(self.y_test.to_frame(), npartitions=nworkers)
         X_train_dask, X_test_dask, y_train_dask, y_test_dask = dask.persist(
             X_train_dask, X_test_dask, y_train_dask, y_test_dask)
         return Data(X_train_dask, X_test_dask, y_train_dask, y_test_dask)
-
-    def to_dask_cudf(self, nworkers):
-        d1 = self.to_dask(nworkers)
-        X_train_dcudf = dcudf.from_dask_dataframe(d1.X_train)
-        #print(X_train_dcudf.columns)
-        X_test_dcudf = dcudf.from_dask_dataframe(d1.X_test)
-        #print(X_test_dcudf.columns)
-        y_train_dcudf = dcudf.from_dask_dataframe(d1.y_train)
-        y_test_dcudf = dcudf.from_dask_dataframe(d1.y_test)
-        X_train_dcudf, X_test_dcudf, y_train_dcudf, y_test_dcudf = dask.persist(
-            X_train_dcudf, X_test_dcudf, y_train_dcudf, y_test_dcudf)
-        return Data(X_train_dcudf, X_test_dcudf, y_train_dcudf, y_test_dcudf)
 
     def dask_wait(self):
         dd.wait(self.X_train)
@@ -263,23 +226,6 @@ class XgbDaskBenchmark(Benchmark):
         self.dask_env.stop()
         Benchmark.__exit__(self, exc_type, exc_value, traceback)
 
-
-class XgbDaskCudfBenchmark(XgbDaskBenchmark):
-
-    def __init__(self, data, params):
-        XgbDaskBenchmark.__init__(self, data, params)
-
-    def df_prepare(self):
-        # prepare the dask-cudf dataframes
-        self.data = self.data.to_dask_cudf(self.dask_env.nworkers)
-        self.data.dask_wait()
-
-    def test(self):
-        self.y_pred = dxgb.predict(
-            self.client, self.model, self.data.X_test).persist()
-        # merge the predictions in host memory, in case the dataset is large
-        self.y_pred = self.y_pred.to_dask_dataframe().compute()
-        dd.wait(self.y_pred)
 
 class SklRfBenchmark(Benchmark):
 

@@ -63,14 +63,6 @@ $ for day in `seq 0 23`; do curl -O http://azuremlsampleexperiments.blob.core.wi
 ```
 (ETL instructions to come)
 
-## Football
-Football dataset and its info can be found on Kaggle here:
-https://www.kaggle.com/hugomathien/soccer. Download the 'soccer.zip' from this
-page into a directory named 'football'. Code used to process this dataset is
-borrowed from here:
-https://www.kaggle.com/airback/match-outcome-prediction-in-football. Note that
-it could take quite sometime to 'prepare' the dataset to be passed to GBM algos!
-
 ## Fraud Detection
 Credit Card Fraud Detection Kaggle competition as found here:
 https://www.kaggle.com/mlg-ulb/creditcardfraud. Download the creditcardfraud.zip
@@ -93,26 +85,11 @@ Download the raw acquisition and performance data from here:
 http://www.fanniemae.com/portal/funding-the-market/data/loan-performance-data.html
 (ETL instructions to come)
 
-## MS LTR
-Microsoft's Learning to Rate query-url dataset. Download the 'MSLR-WEB10K.zip'
-from the following link: https://www.microsoft.com/en-us/research/project/mslr.
-Save this into a directory named 'msltr'.
-
 ## MS LTR Full
 Full version of the Microsoft's Learning to Rate query-url dataset.
 Download the 'MSLR-WEB30K.zip' from the following link:
 https://www.microsoft.com/en-us/research/project/mslr. Save this into a
 directory named 'msltr_full'.
-
-## Planet: Understanding the Amazon from Space
-Planet-Kaggle competition, as found here:
-https://www.kaggle.com/c/planet-understanding-the-amazon-from-space/data.
-Download the 'train_v2.csv.zip' from this page into a directory named 'planet'.
-Also download the 'train-jpg.tar.7z' from this page into the same directory.
-Then extract the 7z file as follows:
-```bash
-$ 7z e train-jpg.tar.7z
-```
 
 # Benchmarking
 This section assumes that one has elevated permissions on the system where this
