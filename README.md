@@ -85,11 +85,10 @@ Download the raw acquisition and performance data from here:
 http://www.fanniemae.com/portal/funding-the-market/data/loan-performance-data.html
 (ETL instructions to come)
 
-## MS LTR Full
-Full version of the Microsoft's Learning to Rate query-url dataset.
-Download the 'MSLR-WEB30K.zip' from the following link:
-https://www.microsoft.com/en-us/research/project/mslr. Save this into a
-directory named 'msltr_full'.
+## MS LTR
+Microsoft's Learning to Rate query-url dataset. Download the 'MSLR-WEB10K.zip'
+from the following link: https://www.microsoft.com/en-us/research/project/mslr.
+Save this into a directory named 'msltr'.
 
 # Benchmarking
 This section assumes that one has elevated permissions on the system where this
