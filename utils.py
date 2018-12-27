@@ -43,13 +43,21 @@ import xgboost as xgb
 
 from metrics import *
 
+if sys.version_info[0] >= 3:
+    from urllib.request import urlretrieve  # pylint: disable=import-error,no-name-in-module
+else:
+    from urllib import urlretrieve  # pylint: disable=import-error,no-name-in-module
+
+
 # just a container for (X|y)_(train,test)
 class Data:
-    def __init__(self, X_train, X_test, y_train, y_test):
+    def __init__(self, X_train, X_test, y_train, y_test, qid_train=None, qid_test=None):
         self.X_train = X_train
         self.X_test = X_test
         self.y_train = y_train
         self.y_test = y_test
+        self.qid_train = qid_train
+        self.qid_test = qid_test
 
     def to_dask(self, nworkers):
         X_train_dask = ddf.from_pandas(self.X_train, npartitions=nworkers)

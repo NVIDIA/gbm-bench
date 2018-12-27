@@ -28,6 +28,7 @@ import sys
 
 import numpy as np
 import pandas as pd
+import pickle
 from sklearn.model_selection import train_test_split
 
 from conversion import *
@@ -35,59 +36,54 @@ from metrics import *
 from utils import *
 
 
-def generate_feables(df):
-    X = df[df.columns.difference(["ArrDelay", "ArrDelayBinary"])]
-    y = df["ArrDelayBinary"]
-    return X,y
+def prepare(dataset_folder, nrows):
+    if not os.path.exists(dataset_folder):
+        os.makedirs(dataset_folder)
 
-def prepareImplCommon(dbFolder, testSize, shuffle, datasetFileName, numRows):
+    url = 'http://kt.ijs.si/elena_ikonomovska/datasets/airline/airline_14col.data.bz2'
+    local_url = os.path.join(dataset_folder,os.path.basename(url))
+    pickle_url = os.path.join(dataset_folder, "airline" + "" if nrows is None else str(nrows) + ".pkl")
+    if os.path.exists(pickle_url):
+        return pickle.load(open(pickle_url, "rb"))
+    if not os.path.isfile(local_url):
+        urlretrieve(url, local_url)
+
     cols = [
         "Year", "Month", "DayofMonth", "DayofWeek", "CRSDepTime",
         "CRSArrTime", "UniqueCarrier", "FlightNum", "ActualElapsedTime",
         "Origin", "Dest", "Distance", "Diverted", "ArrDelay"
     ]
 
-    # load the data as int16, and load only 2e7 rows (1/6 of the dataset) to avoid swapping
+    # load the data as int16
     dtype = np.int16
+
     dtype_columns = {
         "Year": dtype, "Month": dtype, "DayofMonth": dtype, "DayofWeek": dtype,
         "CRSDepTime": dtype, "CRSArrTime": dtype, "FlightNum": dtype,
-        "ActualElapsedTime": dtype, "Distance": dtype,
+        "ActualElapsedTime": dtype, "Distance":
+            dtype,
         "Diverted": dtype, "ArrDelay": dtype,
     }
-    start = time.time()
-    pklFile = os.path.join(dbFolder, "%s-%d.pkl" % (datasetFileName, numRows))
-    if os.path.exists(pklFile):
-        df = pd.read_pickle(pklFile)
-    else:
-        df1 =  pd.read_csv(os.path.join(dbFolder, datasetFileName),
-                           names=cols, dtype=dtype_columns, nrows=numRows)
-        df2 = convert_related_cols_categorical_to_numeric(df1, col_list=["Origin",
-                                                                         "Dest"])
-        del df1
-        df3 = convert_cols_categorical_to_numeric(df2, col_list="UniqueCarrier")
-        del df2
-        df = df3
-        df.to_pickle(pklFile)
-    df["ArrDelayBinary"] = 1*(df["ArrDelay"] > 0)    
-    X, y = generate_feables(df)
+
+    df = pd.read_csv(local_url,
+                     names=cols, dtype=dtype_columns, nrows=nrows)
+
+    # Encode categoricals as numeric
+    for col in df.select_dtypes(['object']).columns:
+        df[col] = df[col].astype("category").cat.codes
+
+    # Turn into binary classification problem
+    df["ArrDelayBinary"] = 1 * (df["ArrDelay"] > 0)
+
+    X = df[df.columns.difference(["ArrDelay", "ArrDelayBinary"])]
+    y = df["ArrDelayBinary"]
     del df
-    X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y,
-                                                        shuffle=shuffle,
-                                                        random_state=42,
-                                                        test_size=testSize)
-    del X, y
-    load_time = time.time() - start
-    print("Airline dataset loaded in %.2fs" % load_time, file=sys.stderr)    
-    return Data(X_train, X_test, y_train, y_test)
-
-def prepareImpl(dbFolder, testSize, shuffle, nrows):
-    rows = 2e7 if nrows is None else nrows
-    return prepareImplCommon(dbFolder, testSize, shuffle,
-                             "airline_14col.data.bz2", rows)
-
-def prepare(dbFolder, nrows):
-    return prepareImpl(dbFolder, 0.2, True, nrows)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=77,
+                                                        test_size=0.2,
+                                                        )
+    data = Data(X_train, X_test, y_train, y_test)
+    pickle.dump(data, open(pickle_url, "wb"), protocol=4)
+    return data
 
 
 def metrics(y_test, y_prob):
@@ -185,11 +181,6 @@ benchmarks = {
     "xgb-dask-gpu":  (False, XgbDaskBenchmark, metrics,
                       dict(xgb_common_params, tree_method="gpu_hist",
                            objective="gpu:binary:logistic")),
-    # TypeError: Data must be either numpy arrays or pandas dataframes. Got <class 'cudf.dataframe.DataFrame'>
-    # [11/26/2018]
-    "xgb-dask-cudf": (False, XgbDaskCudfBenchmark, metrics,
-                     dict(xgb_common_params, tree_method="gpu_hist",
-                          objective="gpu:binary:logistic")),
 
     # Illegal memory accesses encountered! [11/26/2018]
     "xgb-rf-gpu-exact":  (False, XgbBenchmark, metrics,
