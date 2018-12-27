@@ -27,33 +27,31 @@ import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
+import pickle
 
 from utils import *
 
 
-def prepareImpl(dbFolder, testSize, shuffle):
-    # unzip the data
-    csv_name = 'creditcard.csv'
-    unzip(dbFolder, 'creditcardfraud.zip', csv_name)
-    csv_file = os.path.join(dbFolder, csv_name)
-    df = pd.read_csv(csv_file, dtype=np.float32)
+def prepare(dataset_folder, nrows):
+    if not os.path.exists(dataset_folder):
+        os.makedirs(dataset_folder)
+    filename = "creditcard.csv"
+    local_url = os.path.join(dataset_folder, filename)
+    pickle_url = os.path.join(dataset_folder, "creditcard" + "" if nrows is None else str(nrows) + ".pkl")
+    if os.path.exists(pickle_url):
+        return pickle.load(open(pickle_url, "rb"))
+
+    os.system("kaggle datasets download mlg-ulb/creditcardfraud -f" +
+              filename + " -p " + dataset_folder)
+    df = pd.read_csv(local_url + ".zip", dtype=np.float32, nrows=nrows)
     X = df[[col for col in df.columns if col.startswith('V')]].values
     y = df['Class'].values
-    print('Features: ', X.shape)
-    print('Labels: ', y.shape)
-    X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y,
-                                                        shuffle=shuffle,
-                                                        random_state=42,
-                                                        test_size=testSize)
-    # pre-processing (data normalization)
-    scaler = StandardScaler()
-    scaler.fit(X_train)
-    X_train = scaler.transform(X_train)
-    X_test = scaler.transform(X_test)
-    return Data(X_train, X_test, y_train, y_test)
-
-def prepare(dbFolder, nrows):
-    return prepareImpl(dbFolder, 0.3, True)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=77,
+                                                        test_size=0.2,
+                                                        )
+    data = Data(X_train, X_test, y_train, y_test)
+    pickle.dump(data, open(pickle_url, "wb"), protocol=4)
+    return data
 
 
 def metrics(y_test, y_prob):
