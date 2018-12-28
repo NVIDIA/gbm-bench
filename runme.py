@@ -36,7 +36,7 @@ import warnings
 def parseArgs():
     parser = argparse.ArgumentParser(
         description="Benchmark xgboost/lightgbm/catboost on real datasets")
-    parser.add_argument("-dataset", default="football", type=str,
+    parser.add_argument("-dataset", default="higgs", type=str,
                         help="The dataset to be used for benchmarking")
     parser.add_argument("-root", default="/datasets",
                         type=str, help="The root datasets folder")

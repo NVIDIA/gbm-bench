@@ -18,11 +18,11 @@ RUN apt-get update && \
         zlib1g-dev && \
     rm -rf /var/lib/apt/*
 RUN curl -o /opt/miniconda.sh \
-        -O https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh && \
+        -O https://repo.continuum.io/miniconda/Miniconda3-4.4.10-Linux-x86_64.sh && \
     chmod +x /opt/miniconda.sh && \
     /opt/miniconda.sh -b -p /opt/conda && \
     /opt/conda/bin/conda update -n base conda && \
-    /opt/conda/bin/conda install python=3.5 && \
+    /opt/conda/bin/conda install python=3.6 && \
     rm /opt/miniconda.sh
 ENV PATH /opt/conda/bin:$PATH
 RUN conda install \
@@ -31,7 +31,6 @@ RUN conda install \
         ipython \
         ipywidgets \
         jupyter \
-        keras \
         matplotlib \
         nose \
         numpy \
@@ -42,7 +41,6 @@ RUN conda install \
         scikit-learn \
         scipy \
         six \
-        tensorflow \
         tqdm && \
     conda clean -ya
 
@@ -147,7 +145,8 @@ RUN conda install -c rapidsai -c nvidia -c numba -c conda-forge -c defaults \
         nvstrings \
         pandas=0.20.3 \
         pyarrow && \
-    conda clean -ya
+    conda clean -ya && \
+    pip install kaggle
 ENV NUMBAPRO_NVVM=/usr/local/cuda/nvvm/lib64/libnvvm.so
 ENV NUMBAPRO_LIBDEVICE=/usr/local/cuda/nvvm/libdevice/
 RUN git clone https://github.com/rapidsai/dask-cudf /opt/dask-cudf && \
