@@ -138,6 +138,7 @@ rf_common_params.update({
     "num_parallel_tree": nTrees,
     "num_round":         1,
     "random_state":      42,
+    "scale_pos_weight":  1,
     "subsample":         0.8,
 })
 
