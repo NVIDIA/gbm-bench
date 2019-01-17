@@ -235,6 +235,11 @@ class SklRfBenchmark(Benchmark):
     # RandomForest{Classifier,Regressor}, must be set in a derived class
     cls = None
 
+    def df_prepare(self):
+        # fill NaNs with 0, as SKL doesn't accept them
+        self.data.X_train.fillna(0, inplace=True)
+        self.data.X_test.fillna(0, inplace=True)
+
     def train(self):
         self.model = self.cls(**self.params)
         self.model.fit(self.data.X_train, self.data.y_train)

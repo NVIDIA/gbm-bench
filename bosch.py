@@ -43,7 +43,8 @@ def prepare(dataset_folder, nrows):
         os.makedirs(dataset_folder)
     filename = "train_numeric.csv.zip"
     local_url = os.path.join(dataset_folder, filename)
-    pickle_url = os.path.join(dataset_folder, "bosch" + "" if nrows is None else str(nrows) + ".pkl")
+    pickle_url = os.path.join(dataset_folder,
+                              "bosch" + ("" if nrows is None else "-" + str(nrows)) + ".pkl")
     if os.path.exists(pickle_url):
         return pickle.load(open(pickle_url, "rb"))
 
@@ -51,6 +52,7 @@ def prepare(dataset_folder, nrows):
               filename + " -p " + dataset_folder)
     X = pd.read_csv(local_url, index_col=0, compression='zip', dtype=np.float32,
                     nrows=nrows)
+    # X.fillna(0, inplace=True)
     y = X.iloc[:, -1]
     X.drop(X.columns[-1], axis=1, inplace=True)
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=77,
@@ -105,6 +107,28 @@ cat_common_params = {
     "loss_function":    "Logloss",
 }
 
+rf_common_params = dict(xgb_common_params)
+rf_common_params.update({
+    "colsample_bynode":  0.8,
+    "learning_rate":     1.0,
+    "num_parallel_tree": nTrees,
+    "num_round":         1,
+    "random_state":      42,
+    "scale_pos_weight":  1,
+    "subsample":         0.8,
+})
+
+skl_rf_params = {
+    "criterion": "entropy",
+    "max_depth": 6,
+    "max_features": 0.8,
+    "max_leaf_nodes": 2**6,
+    "min_samples_leaf": 1,
+    "n_estimators": nTrees,
+    "n_jobs": nthreads,
+    "random_state": 42,
+}
+
 
 # NOTES: some benchmarks are disabled!
 #  . xgb-gpu  produces illegal memory access error
@@ -131,6 +155,13 @@ benchmarks = {
     "xgb-dask-gpu": (True, XgbDaskBenchmark, metrics,
                      dict(xgb_common_params, tree_method="gpu_hist",
                           objective="gpu:binary:logistic")),
+    "xgb-rf-gpu-exact":  (False, XgbBenchmark, metrics,
+                      dict(rf_common_params, tree_method="gpu_exact",
+                           objective="gpu:binary:logistic")),
+    "xgb-rf-gpu":        (True, XgbBenchmark, metrics,
+                      dict(rf_common_params, tree_method="gpu_hist",
+                           objective="gpu:binary:logistic")),
+    "skl-rf":        (True, SklRfClassificationBenchmark, metrics, skl_rf_params),
 
     "lgbm-cpu":     (True, LgbBenchmark, metrics,
                      dict(lgb_common_params, nthread=nthreads)),
