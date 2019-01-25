@@ -41,7 +41,7 @@ def prepare(dataset_folder, nrows):
     url = 'https://archive.ics.uci.edu/ml/machine-learning-databases/00280/HIGGS.csv.gz'
     local_url = os.path.join(dataset_folder, os.path.basename(url))
     pickle_url = os.path.join(dataset_folder,
-                              "higgs" + "" if nrows is None else str(nrows) + ".pkl")
+                              "higgs" + ("" if nrows is None else "-" + str(nrows)) + ".pkl")
 
     if os.path.exists(pickle_url):
         return pickle.load(open(pickle_url, "rb"))
@@ -49,8 +49,8 @@ def prepare(dataset_folder, nrows):
     if not os.path.isfile(local_url):
         urlretrieve(url, local_url)
     higgs = pd.read_csv(local_url, nrows=nrows)
-    X = higgs.iloc[:, 1:].values
-    y = higgs.iloc[:, 0].values
+    X = higgs.iloc[:, 1:]
+    y = higgs.iloc[:, 0]
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=77,
                                                         test_size=0.2,
                                                         )
@@ -75,7 +75,7 @@ xgb_common_params = {
     "gamma": 0.1,
     "learning_rate": 0.1,
     "max_depth": 5,
-    "max_leaves": 2 ** 5,
+    "max_leaves": 0,
     "min_child_weight": 1,
     "num_round": nTrees,
     "reg_lambda": 1,
@@ -104,6 +104,27 @@ cat_common_params = {
     "loss_function": "Logloss",
 }
 
+rf_common_params = dict(xgb_common_params)
+rf_common_params.update({
+    "colsample_bynode":  0.8,
+    "num_parallel_tree": nTrees,
+    "num_round":         1,
+    "random_state":      42,
+    "scale_pos_weight":  1,
+    "subsample":         0.8,
+})
+
+skl_rf_params = {
+    "criterion": "entropy",
+    "max_depth": 5,
+    "max_features": 0.8,
+    "max_leaf_nodes": None,
+    "min_samples_leaf": 1,
+    "n_estimators": nTrees,
+    "n_jobs": nthreads,
+    "random_state": 42,
+}
+
 # NOTES: some benchmarks are disabled!
 #  . xgb-cpu takes almost an hour to train
 #  . xgb-gpu runs out of memory
@@ -123,6 +144,14 @@ benchmarks = {
     "xgb-dask-gpu": (True, XgbDaskBenchmark, metrics,
                      dict(xgb_common_params, tree_method="gpu_hist",
                           objective="gpu:binary:logistic")),
+    "xgb-rf-gpu-exact":  (True, XgbBenchmark, metrics,
+                      dict(rf_common_params, tree_method="gpu_exact",
+                           objective="gpu:binary:logistic")),
+    "xgb-rf-gpu":        (True, XgbBenchmark, metrics,
+                      dict(rf_common_params, tree_method="gpu_hist",
+                           objective="gpu:binary:logistic")),
+    "skl-rf":        (True, SklRfClassificationBenchmark, metrics, skl_rf_params),
+
     "lgbm-cpu": (True, LgbBenchmark, metrics,
                  dict(lgb_common_params, nthread=nthreads)),
     "lgbm-gpu": (True, LgbBenchmark, metrics,
