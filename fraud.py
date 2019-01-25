@@ -37,15 +37,16 @@ def prepare(dataset_folder, nrows):
         os.makedirs(dataset_folder)
     filename = "creditcard.csv"
     local_url = os.path.join(dataset_folder, filename)
-    pickle_url = os.path.join(dataset_folder, "creditcard" + "" if nrows is None else str(nrows) + ".pkl")
+    pickle_url = os.path.join(dataset_folder,
+                              "creditcard" + ("" if nrows is None else "-" + str(nrows)) + ".pkl")
     if os.path.exists(pickle_url):
         return pickle.load(open(pickle_url, "rb"))
 
     os.system("kaggle datasets download mlg-ulb/creditcardfraud -f" +
               filename + " -p " + dataset_folder)
     df = pd.read_csv(local_url + ".zip", dtype=np.float32, nrows=nrows)
-    X = df[[col for col in df.columns if col.startswith('V')]].values
-    y = df['Class'].values
+    X = df[[col for col in df.columns if col.startswith('V')]]
+    y = df['Class']
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=77,
                                                         test_size=0.2,
                                                         )
@@ -70,7 +71,7 @@ xgb_common_params = {
     "gamma":            0.1,
     "learning_rate":    0.1,
     "max_depth":        3,
-    "max_leaves":       2**3,
+    "max_leaves":       0,
     "min_child_weight": 1,
     "num_round":        nTrees,
     "reg_lambda":       1,
@@ -99,6 +100,29 @@ cat_common_params = {
     "loss_function":    "Logloss",
 }
 
+rf_common_params = dict(xgb_common_params)
+rf_common_params.update({
+    "colsample_bynode":  0.8,
+    "learning_rate":     0.1,
+    "num_parallel_tree": nTrees,
+    "num_round":         1,
+    "reg_alpha":         3,
+    "reg_lambda":        0.01,
+    "random_state":      42,
+    "scale_pos_weight":  1,
+    "subsample":         0.8,
+})
+
+skl_rf_params = {
+    "criterion": "entropy",
+    "max_depth": 3,
+    "max_features": 0.8,
+    "max_leaf_nodes": None,
+    "min_samples_leaf": 1,
+    "n_estimators": nTrees,
+    "n_jobs": nthreads,
+    "random_state": 42,
+}
 
 benchmarks = {
     "xgb-cpu-exact":      (True, XgbBenchmark, metrics,
@@ -122,6 +146,13 @@ benchmarks = {
     "xgb-dask-gpu": (True, XgbDaskBenchmark, metrics,
                      dict(xgb_common_params, tree_method="gpu_hist",
                           objective="gpu:binary:logistic")),
+    "xgb-rf-gpu-exact":  (True, XgbBenchmark, metrics,
+                      dict(rf_common_params, tree_method="gpu_exact",
+                           objective="gpu:binary:logistic")),
+    "xgb-rf-gpu":        (True, XgbBenchmark, metrics,
+                      dict(rf_common_params, tree_method="gpu_hist",
+                           objective="gpu:binary:logistic")),
+    "skl-rf":        (True, SklRfClassificationBenchmark, metrics, skl_rf_params),
 
     "lgbm-cpu":     (True, LgbBenchmark, metrics,
                      dict(lgb_common_params, nthread=nthreads)),
