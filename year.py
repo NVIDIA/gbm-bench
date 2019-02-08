@@ -113,6 +113,7 @@ rf_common_params.update({
     "learning_rate":     1.0,
     "num_parallel_tree": nTrees,
     "num_round":         1,
+    "reg_lambda":        0.01,
     "random_state":      42,
     "scale_pos_weight":  1,
     "subsample":         0.8,
