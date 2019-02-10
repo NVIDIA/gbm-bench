@@ -74,9 +74,6 @@ $ cd higgs
 $ wget https://archive.ics.uci.edu/ml/machine-learning-databases/00280/HIGGS.csv.gz
 ```
 
-## Mortgage
-TBD: add information
-
 ## Mortgage Data from Fannie Mae
 Download the raw acquisition and performance data from here:
 http://www.fanniemae.com/portal/funding-the-market/data/loan-performance-data.html
