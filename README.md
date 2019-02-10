@@ -94,7 +94,11 @@ your flow accordingly.
 
 ## Launching container
 ```bash
-docker run --runtime=nvidia -it --rm -v {YOUR-LOCATION/gbm-datasets}:/opt/gbm-datasets -v gbm-bench:/opt/gbm-bench gbm-bench:9.2 /bin/bash
+docker run --runtime=nvidia -it --rm \
+    -v {YOUR-LOCATION/gbm-datasets}:/opt/gbm-datasets \
+    -v {YOUR-LOCATION/gbm-bench}:/opt/gbm-bench \
+    -v {KAGGLE-API-LOCATION/.kaggle}:/root/.kaggle
+     gbm-bench:9.2 /bin/bash
 ```
 Basically, make sure that you have mounted the datasets directory inside the container.
 

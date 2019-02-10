@@ -152,7 +152,3 @@ ENV NUMBAPRO_LIBDEVICE=/usr/local/cuda/nvvm/libdevice/
 RUN git clone https://github.com/rapidsai/dask-cudf /opt/dask-cudf && \
     cd /opt/dask-cudf && \
     python setup.py install
-
-# the benchmark
-COPY . /opt/gbm-bench
-RUN chmod -R a+rw /opt/gbm-bench
