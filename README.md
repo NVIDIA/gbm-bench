@@ -64,11 +64,6 @@ $ cd higgs
 $ wget https://archive.ics.uci.edu/ml/machine-learning-databases/00280/HIGGS.csv.gz
 ```
 
-## Mortgage Data from Fannie Mae
-Download the raw acquisition and performance data from here:
-http://www.fanniemae.com/portal/funding-the-market/data/loan-performance-data.html
-(ETL instructions to come)
-
 # Benchmarking
 This section assumes that one has elevated permissions on the system where this
 docker image will be run for benchmarking! In case this is not true, update
