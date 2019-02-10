@@ -50,16 +50,6 @@ https://www.kaggle.com/c/bosch-production-line-performance/data. Download the
 files 'train_numeric.csv.zip', 'train_date.csv.zip' and
 'train_categorial.csv.zip' into a folder named 'bosch'.
 
-## Criteo CTR (> 1 TB)
-Criteo CTR (click-through rate) data as found here:
-http://labs.criteo.com/2013/12/download-terabyte-click-logs-2/
-```bash
-$ mkdir criteo
-$ cd criteo
-$ for day in `seq 0 23`; do curl -O http://azuremlsampleexperiments.blob.core.windows.net/criteo/day_$day.gz; done
-```
-(ETL instructions to come)
-
 ## Fraud Detection
 Credit Card Fraud Detection Kaggle competition as found here:
 https://www.kaggle.com/mlg-ulb/creditcardfraud. Download the creditcardfraud.zip
