@@ -4,10 +4,12 @@ ML datasets. This is a more scriptable version of Microsoft's work on comparing
 LightGBM and XGBoost: https://github.com/Azure/fast_retraining/. Most of the
 datasets used here are the same as in the above repo.
 
+# Dependencies
+- Cuda 9.2 or greater
+- Nvidia docker 2.0
+
 # Setting up this repo
 ```bash
-  # make sure that you have CUDA SDK (or atleast nvidia driver) installed
-  # install docker and nvidia-docker, first
 
   $ git clone git@gitlab.com:nvdevtech/gbm-bench.git
   # The below link will be made active once we open-source this work
@@ -92,7 +94,7 @@ your flow accordingly.
 
 ## Launching container
 ```bash
-  $ nvidia-docker run -it -rm -v `pwd`/../gbm-datasets:/opt/gbm-datasets gbm-bench:9.2 /bin/bash
+docker run --runtime=nvidia -it --rm -v {YOUR-LOCATION/gbm-datasets}:/opt/gbm-datasets -v gbm-bench:/opt/gbm-bench gbm-bench:9.2 /bin/bash
 ```
 Basically, make sure that you have mounted the datasets directory inside the container.
 
