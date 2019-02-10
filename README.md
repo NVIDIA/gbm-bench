@@ -86,14 +86,6 @@ Basically, make sure that you have mounted the datasets directory inside the con
   user@container$ cat ./gbm-bench/football.json
 ```
 
-## Running all datasets and benchmarks to compare results
-```bash
-  user@container$ cd /opt/gbm-bench
-  # This generates a benchmark_5_100.csv containing runtime/perf numbers
-  # This also logs all the output inside output_5_100.log
-  user@container$ make MAXDEPTH=5 NTREES=100 runAll
-```
-
 # Adding a new dataset?
 Here are the steps involved in doing so:
 * Assume that your dataset name is "mydataset"
@@ -129,8 +121,6 @@ benchmarks = {
 # params: map of params to be passed to the final library to customize the
 #         process of training
 ```
-* Add a line inside Makefile under '_runAll' target to benchmark this particular
-  dataset as well.
 
 # Trouble shooting
 ## [LightGBM] [Warning] boost::filesystem::create_directories: Permission denied: ...
