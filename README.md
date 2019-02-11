@@ -16,53 +16,23 @@ datasets used here are the same as in the above repo.
   # $ git clone https://github.com/NVIDIA/gradient-boosted-benchmarks
   $ cd gbm-bench
   $ docker build -t gbm-bench:9.2 .
-
-  $ cd ..
-  # Download the datasets as described in the next section.
 ```
 
 # Datasets
-This section contains info on how to download the datasets for this exercise.
-Note that to download some datasets, one may have to sign-up in the respective
-websites and probably also have to agree to their T&C's! Also note that to
-maintain brevity, the dataset description is omitted out of this document.
-Interested readers would want to visit respective links to know more about it.
+gbm-bench will automatically download datasets as needed using wget or the [Kaggle API](https://github.com/Kaggle/kaggle-api). To use the kaggle datasets you will need a valid kaggle account and API token. Create a folder 'gbm-datasets' in some location with sufficient space for large datasets. Mounting this folder on fast local storage as opposed to network storage is recommended.
 
-At first, create a root folder which contains all the datasets that will be
-downloaded here. Let's calls it 'gbm-datasets'. From here onwards, unless
-otherwise mentioned, all folders and paths will be wrt this root folder only.
 ```bash
 $ mkdir gbm-datasets
 ```
+Upon launching docker you will pass this folder as well as the location of the kaggle API key as volumes to the container.
 
-## Airline
-Airline dataset and more info on it can be found here:
-http://kt.ijs.si/elena_ikonomovska/data.html
-```bash
-$ mkdir airline
-$ cd airline
-$ wget http://kt.ijs.si/elena_ikonomovska/datasets/airline/airline_14col.data.bz2
-```
-
-## Bosch
-Bosch dataset as given out on Kaggle competition here:
-https://www.kaggle.com/c/bosch-production-line-performance/data. Download the
-files 'train_numeric.csv.zip', 'train_date.csv.zip' and
-'train_categorial.csv.zip' into a folder named 'bosch'.
-
-## Fraud Detection
-Credit Card Fraud Detection Kaggle competition as found here:
-https://www.kaggle.com/mlg-ulb/creditcardfraud. Download the creditcardfraud.zip
-from this page into a folder named 'fraud'.
-
-## Higgs dataset
-This is the dataset as found in the UCI repo here:
-https://archive.ics.uci.edu/ml/datasets/HIGGS
-```bash
-$ mkdir higgs
-$ cd higgs
-$ wget https://archive.ics.uci.edu/ml/machine-learning-databases/00280/HIGGS.csv.gz
-```
+| Name                                                                | Rows   | Columns | Task           |
+|---------------------------------------------------------------------|--------|---------|----------------|
+| [airline](http://kt.ijs.si/elena_ikonomovska/data.html)             | 115M   | 13      | Classification |
+| [bosch](https://www.kaggle.com/c/bosch-production-line-performance) | 1.184M | 968     | Classification |
+| [fraud](https://www.kaggle.com/mlg-ulb/creditcardfraud)             | 285K   | 28      | Classification |
+| [higgs](https://archive.ics.uci.edu/ml/datasets/HIGGS)              | 11M    | 28      | Classification |
+| [year](https://archive.ics.uci.edu/ml/datasets/yearpredictionmsd)   | 515K   | 90      | Regression     |
 
 # Benchmarking
 This section assumes that one has elevated permissions on the system where this
@@ -77,7 +47,7 @@ docker run --runtime=nvidia -it --rm \
     -v {KAGGLE-API-LOCATION/.kaggle}:/root/.kaggle
      gbm-bench:9.2 /bin/bash
 ```
-Basically, make sure that you have mounted the datasets directory inside the container.
+The above command launches an interactive session and mounts the dataset folder, the gbm-bench repo and your kaggle API key inside the container.
 
 ## Running a dataset
 ```bash
