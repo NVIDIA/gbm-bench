@@ -42,9 +42,10 @@ your flow accordingly.
 ## Launching container
 ```bash
 docker run --runtime=nvidia -it --rm \
+    -w /opt/gbm-bench \
     -v {YOUR-LOCATION/gbm-datasets}:/opt/gbm-datasets \
     -v {YOUR-LOCATION/gbm-bench}:/opt/gbm-bench \
-    -v {KAGGLE-API-LOCATION/.kaggle}:/root/.kaggle
+    -v {KAGGLE-API-LOCATION/.kaggle}:/root/.kaggle \
      gbm-bench:9.2 /bin/bash
 ```
 The above command launches an interactive session and mounts the dataset folder, the gbm-bench repo and your kaggle API key inside the container.
@@ -56,41 +57,6 @@ The above command launches an interactive session and mounts the dataset folder,
   user@container$ cat ./gbm-bench/football.json
 ```
 
-# Adding a new dataset?
-Here are the steps involved in doing so:
-* Assume that your dataset name is "mydataset"
-* Create a folder named mydataset inside the root folder for datasets
-* Copy the dataset file(s) in this folder
-* Now, create a file named mydataset.py inside this repo
-* Note that the name of this file is exactly the same as of the dataset!
-* Create a function with signature 'prepareImpl(dbFolder, testSize, shuffle)'
-  inside this file. dbFolder=the path to the above dataset folder; testSize=the
-  size of the test-set to be created during train_test_split; shuffle=whether to
-  shuffle the datapoints or not. This function should read/preprocess your
-  dataset and return the 4 arrays: X_train, X_test, y_train, y_test.
-* Create a another wrapper function with signature 'prepare(dbFolder)', this
-  function just calls prepareImpl with hard-coded values for testSize and
-  shuffle.
-* Then create a map named benchmarks in the following format:
-```python
-benchmarks = {
-    "xgb-cpu-exact": (Enabled, BenchmarkClass, metricsFunc, params),
-    "xgb-cpu": (Enabled, BenchmarkClass, metricsFunc, params),
-    "xgb-gpu-exact": (Enabled, BenchmarkClass, metricsFunc, params),
-    "xgb-gpu": (Enabled, BenchmarkClass, metricsFunc, params),
-    "lgbm-cpu": (Enabled, BenchmarkClass, metricsFunc, params),
-    "lgbm-gpu": (Enabled, BenchmarkClass, metricsFunc, params),
-    "cat-cpu": (Enabled, BenchmarkClass, metricsFunc, params),
-    "cat-gpu": (Enabled, BenchmarkClass, metricsFunc, params),
-}
-# Enabled: Whether this benchmark is enabled to be run or not
-# BenchmarkClass: Class to be used to instantiate and run the benchmark. For the
-#                 list of classes, refer to utils.py
-# metricsFunc: function which evaluates accuracy metrics. For the list of such
-#              functions, refer to metrics.py
-# params: map of params to be passed to the final library to customize the
-#         process of training
-```
 
 # Trouble shooting
 ## [LightGBM] [Warning] boost::filesystem::create_directories: Permission denied: ...
