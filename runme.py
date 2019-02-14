@@ -25,40 +25,31 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import ast
 import os
 import sys
 import argparse
 import json
-import warnings
-import algorithms
 import time
+import algorithms
 from metrics import get_metrics
-from datasets import Data, prepare_dataset
-
-# set this to override the return value of get_number_processors()
-number_processors_override = None
+from datasets import prepare_dataset
 
 
-def get_number_processors():
-    if number_processors_override is not None:
-        return number_processors_override
-    try:
-        num = os.cpu_count()
-    except:
-        num = multiprocessing.cpu_count()
-    return num
+def get_number_processors(args):
+    if args.cpus == 0:
+        return os.cpu_count()
+    return args.cpus
 
 
-def print_sys_info():
+def print_sys_info(args):
     print("System  : %s" % sys.version)
     print("Xgboost : %s" % os.getenv("XG_COMMIT_ID"))
     print("LightGBM: %s" % os.getenv("LG_COMMIT_ID"))
     print("CatBoost: %s" % os.getenv("CAT_COMMIT_ID"))
-    print("#jobs   : %d" % get_number_processors())
+    print("#jobs   : %d" % args.cpus)
 
 
-def parseArgs():
+def parse_args():
     parser = argparse.ArgumentParser(
         description="Benchmark xgboost/lightgbm/catboost on real datasets")
     parser.add_argument("-dataset", default="all", type=str,
@@ -97,13 +88,11 @@ def parseArgs():
 
 # benchmarks a single dataset
 def benchmark(args, dataset_folder, dataset):
-    # TODO: this is a HACK to support dynamic loading of modules at runtime!
-    warnings.filterwarnings("ignore")
     data = prepare_dataset(dataset_folder, dataset, args.nrows)
     results = {}
     # "all" runs all algorithms
     if args.algorithm == "all":
-        args.algorithm = "xgb-gpu,xgb-cpu,lgbm-cpu,lgbm-gpu"
+        args.algorithm = "xgb-gpu,xgb-cpu,lgbm-cpu,lgbm-gpu,cat-cpu,cat-gpu"
     for alg in args.algorithm.split(","):
         print("Running '%s' ..." % alg)
         runner = algorithms.Algorithm.create(alg, data)
@@ -121,29 +110,25 @@ def benchmark(args, dataset_folder, dataset):
 
 
 def main():
-    args = parseArgs()
-    if args.cpus > 0:
-        global number_processors_override
-        number_processors_override = args.cpus
-    print_sys_info()
+    args = parse_args()
+    args.cpus = get_number_processors(args)
+    print_sys_info(args)
     if args.warmup:
-        warmup_extra_params = {"n_gpus": args.gpus}
-        benchmark(os.path.join(args.root, "fraud"), __import__("fraud"),
-                  benchmarks, warmup_extra_params, args.nrows)
+        benchmark(args, os.path.join(args.root, "fraud"), "fraud"
+                  )
 
-    if args.dataset == 'all':
-        args.dataset = 'airline,bosch,fraud,higgs,year'
-    results = {}
-    for dataset in args.dataset.split(","):
-        folder = os.path.join(args.root, dataset)
-        results.update({dataset: benchmark(args, folder, dataset)})
-        print(json.dumps({dataset: results[dataset]}, indent=2, sort_keys=True))
-    output = json.dumps(results, indent=2, sort_keys=True)
-    fp = open(args.output, "w")
-    fp.write(output + "\n")
-    fp.close()
-    print("Results written to file '%s'" % args.output)
+        if args.dataset == 'all':
+            args.dataset = 'airline,bosch,fraud,higgs,year'
+        results = {}
+        for dataset in args.dataset.split(","):
+            folder = os.path.join(args.root, dataset)
+            results.update({dataset: benchmark(args, folder, dataset)})
+            print(json.dumps({dataset: results[dataset]}, indent=2, sort_keys=True))
+        output = json.dumps(results, indent=2, sort_keys=True)
+        output_file = open(args.output, "w")
+        output_file.write(output + "\n")
+        output_file.close()
+        print("Results written to file '%s'" % args.output)
 
-
-if __name__ == "__main__":
-    main()
+    if __name__ == "__main__":
+        main()

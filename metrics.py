@@ -30,16 +30,15 @@
 
 import numpy as np
 import sklearn.metrics as sklm
-from datasets import *
+from datasets import LearningTask
 
 
 def get_metrics(data, pred):
     if data.learning_task == LearningTask.REGRESSION:
         return regression_metrics(data.y_test, pred)
-    elif data.learning_task == LearningTask.CLASSIFICATION:
+    if data.learning_task == LearningTask.CLASSIFICATION:
         return classification_metrics(data.y_test, pred)
-    else:
-        raise ValueError("No metrics defined for learning task: " + str(data.learning_task))
+    raise ValueError("No metrics defined for learning task: " + str(data.learning_task))
 
 
 def evaluate_metrics(y_true, y_pred, metrics):

@@ -22,26 +22,14 @@
 
 # Copyright (c) 2018, NVIDIA CORPORATION. All rights reserved.
 
-import multiprocessing
 import os
-import subprocess
 import sys
-import time
-
-import catboost as cat
-import dask
-import dask.dataframe as ddf
-import pickle
-import dask.distributed as dd
-import dask_xgboost as dxgb
-import lightgbm as lgb
-import numpy as np
-import pandas as pd
-from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
-import xgboost as xgb
 from enum import Enum
-
+import pickle
+import numpy as np
 from sklearn.model_selection import train_test_split
+
+import pandas as pd
 
 if sys.version_info[0] >= 3:
     from urllib.request import urlretrieve  # pylint: disable=import-error,no-name-in-module
@@ -55,7 +43,7 @@ class LearningTask(Enum):
     MULTICLASS_CLASSIFICATION = 3
 
 
-class Data:
+class Data:  # pylint: disable=too-few-public-methods,too-many-arguments
     def __init__(self, X_train, X_test, y_train, y_test, learning_task, qid_train=None,
                  qid_test=None):
         self.X_train = X_train
@@ -73,7 +61,7 @@ def prepare_dataset(dataset_folder, dataset, nrows):
     return prepare_function(dataset_folder, nrows)
 
 
-def prepare_airline(dataset_folder, nrows):
+def prepare_airline(dataset_folder, nrows):  # pylint: disable=too-many-locals
     if not os.path.exists(dataset_folder):
         os.makedirs(dataset_folder)
 
