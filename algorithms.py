@@ -50,7 +50,7 @@ class Algorithm(ABC):
         raise ValueError("Unknown algorithm: " + name)
 
     @abstractmethod
-    def fit(self, data, num_trees):
+    def fit(self, data, args):
         pass
 
     @abstractmethod
@@ -71,9 +71,9 @@ class XgbAlgorithm(Algorithm):
         self.dtrain = xgb.DMatrix(data.X_train, data.y_train)
         self.dtest = xgb.DMatrix(data.X_test, data.y_test)
 
-    def configure(self, data):
+    def configure(self, data, args):
         params = {"max_depth": 8, "max_leaves": 256, "learning_rate": 0.1, "min_child_weight": 1,
-                  "reg_lambda": 1, "reg_alpha": 1}
+                  "reg_lambda": 1, "reg_alpha": 1, "nthread": args.cpus, "n_gpus": args.gpus}
         if data.learning_task == LearningTask.REGRESSION:
             params["objective"] = "reg:linear"
         elif data.learning_task == LearningTask.CLASSIFICATION:
@@ -81,9 +81,9 @@ class XgbAlgorithm(Algorithm):
             params["scale_pos_weight"] = len(data.y_train) / np.count_nonzero(data.y_train)
         return params
 
-    def fit(self, data, num_trees):
-        params = self.configure(data)
-        self.model = xgb.train(params, self.dtrain, num_trees)
+    def fit(self, data, args):
+        params = self.configure(data, args)
+        self.model = xgb.train(params, self.dtrain, args.ntrees)
 
     def test(self, data):
         return self.model.predict(self.dtest)
@@ -95,15 +95,15 @@ class XgbAlgorithm(Algorithm):
 
 
 class XgbGPUHistAlgorithm(XgbAlgorithm):
-    def configure(self, data):
-        params = super(XgbGPUHistAlgorithm, self).configure(data)
+    def configure(self, data, args):
+        params = super(XgbGPUHistAlgorithm, self).configure(data, args)
         params.update({"tree_method": "gpu_hist"})
         return params
 
 
 class XgbCPUHistAlgorithm(XgbAlgorithm):
-    def configure(self, data):
-        params = super(XgbCPUHistAlgorithm, self).configure(data)
+    def configure(self, data, args):
+        params = super(XgbCPUHistAlgorithm, self).configure(data, args)
         params.update({"tree_method": "hist"})
         return params
 
@@ -114,9 +114,9 @@ class LgbmAlgorithm(Algorithm):
                                   free_raw_data=False)
         self.model = None
 
-    def configure(self, data):
+    def configure(self, data, args):
         params = {"max_depth": 8, "max_leaves": 256, "learning_rate": 0.1, "min_child_weight": 1,
-                  "reg_lambda": 1, "reg_alpha": 1}
+                  "reg_lambda": 1, "reg_alpha": 1, "nthread": args.cpus}
         if data.learning_task == LearningTask.REGRESSION:
             params["objective"] = "regression"
         elif data.learning_task == LearningTask.CLASSIFICATION:
@@ -124,9 +124,9 @@ class LgbmAlgorithm(Algorithm):
             params["scale_pos_weight"] = len(data.y_train) / np.count_nonzero(data.y_train)
         return params
 
-    def fit(self, data, num_trees):
-        params = self.configure(data)
-        self.model = lgb.train(params, self.dtrain, num_trees)
+    def fit(self, data, args):
+        params = self.configure(data, args)
+        self.model = lgb.train(params, self.dtrain, args.ntrees)
 
     def test(self, data):
         return self.model.predict(data.X_test)
@@ -142,8 +142,8 @@ class LgbmCPUAlgorithm(LgbmAlgorithm):
 
 
 class LgbmGPUAlgorithm(LgbmAlgorithm):
-    def configure(self, data):
-        params = super(LgbmGPUAlgorithm, self).configure(data)
+    def configure(self, data, args):
+        params = super(LgbmGPUAlgorithm, self).configure(data, args)
         params.update({"device": "gpu"})
         return params
 
@@ -153,9 +153,12 @@ class CatAlgorithm(Algorithm):
         self.dtrain = cat.Pool(data.X_train, data.y_train)
         self.model = None
 
-    def configure(self, data):
+    def configure(self, data, args):
         params = {"max_depth": 8, "learning_rate": 0.1,
-                  "reg_lambda": 1}
+                  "reg_lambda": 1, "thread_count": args.cpus}
+        if args.gpus >= 0:
+            params["devices"] = "0-" + str(args.gpus)
+
         if data.learning_task == LearningTask.REGRESSION:
             params["objective"] = "RMSE"
         elif data.learning_task == LearningTask.CLASSIFICATION:
@@ -163,9 +166,9 @@ class CatAlgorithm(Algorithm):
             params["scale_pos_weight"] = len(data.y_train) / np.count_nonzero(data.y_train)
         return params
 
-    def fit(self, data, num_trees):
-        params = self.configure(data)
-        params["iterations"] = num_trees
+    def fit(self, data, args):
+        params = self.configure(data, args)
+        params["iterations"] = args.ntrees
         self.model = cat.CatBoost(params)
         self.model.fit(self.dtrain)
 
@@ -179,14 +182,14 @@ class CatAlgorithm(Algorithm):
 
 
 class CatCPUAlgorithm(CatAlgorithm):
-    def configure(self, data):
-        params = super(CatCPUAlgorithm, self).configure(data)
+    def configure(self, data, args):
+        params = super(CatCPUAlgorithm, self).configure(data, args)
         params.update({"task_type": "CPU"})
         return params
 
 
 class CatGPUAlgorithm(CatAlgorithm):
-    def configure(self, data):
-        params = super(CatGPUAlgorithm, self).configure(data)
+    def configure(self, data, args):
+        params = super(CatGPUAlgorithm, self).configure(data, args)
         params.update({"task_type": "GPU"})
         return params

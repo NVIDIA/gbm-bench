@@ -200,9 +200,6 @@ def prepare_year(dataset_folder, nrows):
     year = pd.read_csv(local_url, nrows=nrows, header=None)
     X = year.iloc[:, 1:]
     y = year.iloc[:, 0]
-    # this dataset requires a specific train/test split,
-    # with the specified number of rows at the start belonging to the train set,
-    # and the rest being the test set
     X_train, X_test, y_train, y_test = train_test_split(X, y, shuffle=False,
                                                         test_size=0.2)
     data = Data(X_train, X_test, y_train, y_test, LearningTask.REGRESSION)

@@ -59,10 +59,10 @@ def parse_args():
     parser.add_argument("-algorithm", default="all", type=str,
                         help=("Comma-separated list of algorithms to run; "
                               "'all' run all"))
-    parser.add_argument("-gpus", default=1, type=int,
+    parser.add_argument("-gpus", default=-1, type=int,
                         help=("#GPUs to use for the benchmarks; "
-                              "ignored when not supported"))
-    parser.add_argument("-cpus", default=0, type=int,
+                              "ignored when not supported. Default is to use all."))
+    parser.add_argument("-cpus", default=16, type=int,
                         help=("#CPUs to use for the benchmarks; "
                               "0 means multiprocessing.cpu_count()"))
     parser.add_argument("-output", default=None, type=str,
@@ -98,7 +98,7 @@ def benchmark(args, dataset_folder, dataset):
         runner = algorithms.Algorithm.create(alg, data)
         with runner:
             start = time.time()
-            runner.fit(data, args.ntrees)
+            runner.fit(data, args)
             train_time = time.time() - start
             pred = runner.test(data)
             results[alg] = {
@@ -114,21 +114,20 @@ def main():
     args.cpus = get_number_processors(args)
     print_sys_info(args)
     if args.warmup:
-        benchmark(args, os.path.join(args.root, "fraud"), "fraud"
-                  )
+        benchmark(args, os.path.join(args.root, "fraud"), "fraud")
+    if args.dataset == 'all':
+        args.dataset = 'airline,bosch,fraud,higgs,year'
+    results = {}
+    for dataset in args.dataset.split(","):
+        folder = os.path.join(args.root, dataset)
+        results.update({dataset: benchmark(args, folder, dataset)})
+        print(json.dumps({dataset: results[dataset]}, indent=2, sort_keys=True))
+    output = json.dumps(results, indent=2, sort_keys=True)
+    output_file = open(args.output, "w")
+    output_file.write(output + "\n")
+    output_file.close()
+    print("Results written to file '%s'" % args.output)
 
-        if args.dataset == 'all':
-            args.dataset = 'airline,bosch,fraud,higgs,year'
-        results = {}
-        for dataset in args.dataset.split(","):
-            folder = os.path.join(args.root, dataset)
-            results.update({dataset: benchmark(args, folder, dataset)})
-            print(json.dumps({dataset: results[dataset]}, indent=2, sort_keys=True))
-        output = json.dumps(results, indent=2, sort_keys=True)
-        output_file = open(args.output, "w")
-        output_file.write(output + "\n")
-        output_file.close()
-        print("Results written to file '%s'" % args.output)
 
-    if __name__ == "__main__":
-        main()
+if __name__ == "__main__":
+    main()

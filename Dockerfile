@@ -42,7 +42,8 @@ RUN conda install \
         scipy \
         six \
         tqdm && \
-    conda clean -ya
+        conda clean -ya && \
+        pip install kaggle
 
 # cmake
 ENV CMAKE_SHORT_VERSION 3.12
