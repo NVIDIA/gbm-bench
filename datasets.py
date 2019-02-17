@@ -68,7 +68,8 @@ def prepare_airline(dataset_folder, nrows):  # pylint: disable=too-many-locals
     url = 'http://kt.ijs.si/elena_ikonomovska/datasets/airline/airline_14col.data.bz2'
     local_url = os.path.join(dataset_folder, os.path.basename(url))
     pickle_url = os.path.join(dataset_folder,
-                              "airline" + "" if nrows is None else str(nrows) + ".pkl")
+                              "airline"
+                              + ("" if nrows is None else "-" + str(nrows)) + ".pkl")
     if os.path.exists(pickle_url):
         return pickle.load(open(pickle_url, "rb"))
     if not os.path.isfile(local_url):
@@ -184,24 +185,30 @@ def prepare_higgs(dataset_folder, nrows):
 
 
 def prepare_year(dataset_folder, nrows):
+    if nrows is not None:
+        print("Warning: nrows ignored for YearPredictionMSD dataset.")
     if not os.path.exists(dataset_folder):
         os.makedirs(dataset_folder)
     url = 'https://archive.ics.uci.edu/ml/machine-learning-databases/00203/YearPredictionMSD.txt' \
           '.zip'
     local_url = os.path.join(dataset_folder, os.path.basename(url))
     pickle_url = os.path.join(dataset_folder,
-                              "year" + ("" if nrows is None else "-" + str(nrows)) + ".pkl")
+                              "year.pkl")
 
     if os.path.exists(pickle_url):
         return pickle.load(open(pickle_url, "rb"))
 
     if not os.path.isfile(local_url):
         urlretrieve(url, local_url)
-    year = pd.read_csv(local_url, nrows=nrows, header=None)
+    year = pd.read_csv(local_url, header=None)
     X = year.iloc[:, 1:]
     y = year.iloc[:, 0]
+    # this dataset requires a specific train/test split,
+    # with the specified number of rows at the start belonging to the train set,
+    # and the rest being the test set
     X_train, X_test, y_train, y_test = train_test_split(X, y, shuffle=False,
-                                                        test_size=0.2)
+                                                        train_size=463715,
+                                                        test_size=51630)
     data = Data(X_train, X_test, y_train, y_test, LearningTask.REGRESSION)
     pickle.dump(data, open(pickle_url, "wb"), protocol=4)
     return data

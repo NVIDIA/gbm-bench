@@ -55,6 +55,8 @@ def classification_metrics(y_true, y_prob, threshold=0.5):
         "Log_Loss": lambda real, pred: sklm.log_loss(real, y_prob, eps=1e-5),
         # yes, I'm using y_prob here!
         "AUC": lambda real, pred: sklm.roc_auc_score(real, y_prob),
+        "Precision": sklm.precision_score,
+        "Recall": sklm.recall_score,
     }
     return evaluate_metrics(y_true, y_pred, metrics)
 

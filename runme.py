@@ -30,6 +30,7 @@ import sys
 import argparse
 import json
 import time
+import ast
 import algorithms
 from metrics import get_metrics
 from datasets import prepare_dataset
@@ -62,7 +63,7 @@ def parse_args():
     parser.add_argument("-gpus", default=-1, type=int,
                         help=("#GPUs to use for the benchmarks; "
                               "ignored when not supported. Default is to use all."))
-    parser.add_argument("-cpus", default=16, type=int,
+    parser.add_argument("-cpus", default=0, type=int,
                         help=("#CPUs to use for the benchmarks; "
                               "0 means multiprocessing.cpu_count()"))
     parser.add_argument("-output", default=None, type=str,
@@ -79,6 +80,7 @@ def parse_args():
     parser.add_argument("-warmup", action="store_true",
                         help=("Whether to run a small benchmark (fraud) as a warmup"))
     parser.add_argument("-verbose", action="store_true", help="Produce verbose output")
+    parser.add_argument("-extra", default='{}', help="Extra arguments as a python dictionary")
     args = parser.parse_args()
     # default value for output json file
     if not args.output:
@@ -112,6 +114,7 @@ def benchmark(args, dataset_folder, dataset):
 def main():
     args = parse_args()
     args.cpus = get_number_processors(args)
+    args.extra = ast.literal_eval(args.extra)
     print_sys_info(args)
     if args.warmup:
         benchmark(args, os.path.join(args.root, "fraud"), "fraud")

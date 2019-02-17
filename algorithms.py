@@ -65,6 +65,11 @@ class Algorithm(ABC):
         pass
 
 
+# learning parameters shared by all algorithms, using the xgboost convention
+shared_params = {"max_depth": 8, "learning_rate": 0.1, "min_child_weight": 1,
+                 "reg_lambda": 1}
+
+
 class XgbAlgorithm(Algorithm):
     def __init__(self, data):
         self.model = None
@@ -72,13 +77,15 @@ class XgbAlgorithm(Algorithm):
         self.dtest = xgb.DMatrix(data.X_test, data.y_test)
 
     def configure(self, data, args):
-        params = {"max_depth": 8, "max_leaves": 256, "learning_rate": 0.1, "min_child_weight": 1,
-                  "reg_lambda": 1, "reg_alpha": 1, "nthread": args.cpus, "n_gpus": args.gpus}
+        params = shared_params.copy()
+        params.update({"max_leaves": 256,
+                       "nthread": args.cpus, "n_gpus": args.gpus})
         if data.learning_task == LearningTask.REGRESSION:
             params["objective"] = "reg:linear"
         elif data.learning_task == LearningTask.CLASSIFICATION:
             params["objective"] = "binary:logistic"
             params["scale_pos_weight"] = len(data.y_train) / np.count_nonzero(data.y_train)
+        params.update(args.extra)
         return params
 
     def fit(self, data, args):
@@ -115,13 +122,15 @@ class LgbmAlgorithm(Algorithm):
         self.model = None
 
     def configure(self, data, args):
-        params = {"max_depth": 8, "max_leaves": 256, "learning_rate": 0.1, "min_child_weight": 1,
-                  "reg_lambda": 1, "reg_alpha": 1, "nthread": args.cpus}
+        params = shared_params.copy()
+        params.update({"max_leaves": 256,
+                       "nthread": args.cpus})
         if data.learning_task == LearningTask.REGRESSION:
             params["objective"] = "regression"
         elif data.learning_task == LearningTask.CLASSIFICATION:
             params["objective"] = "binary"
             params["scale_pos_weight"] = len(data.y_train) / np.count_nonzero(data.y_train)
+        params.update(args.extra)
         return params
 
     def fit(self, data, args):
@@ -154,8 +163,9 @@ class CatAlgorithm(Algorithm):
         self.model = None
 
     def configure(self, data, args):
-        params = {"max_depth": 8, "learning_rate": 0.1,
-                  "reg_lambda": 1, "thread_count": args.cpus}
+        params = shared_params.copy()
+        params.update({
+            "thread_count": args.cpus})
         if args.gpus >= 0:
             params["devices"] = "0-" + str(args.gpus)
 
@@ -164,6 +174,7 @@ class CatAlgorithm(Algorithm):
         elif data.learning_task == LearningTask.CLASSIFICATION:
             params["objective"] = "Logloss"
             params["scale_pos_weight"] = len(data.y_train) / np.count_nonzero(data.y_train)
+        params.update(args.extra)
         return params
 
     def fit(self, data, args):
