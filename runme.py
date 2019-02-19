@@ -72,11 +72,11 @@ def parse_args():
                         help=("Number of trees. Default is as specified in "
                               "the respective dataset configuration"))
     parser.add_argument("-nrows", default=None, type=int,
-                        help=("Total rows to be used for training/test. "
-                              "Default is to consume full dataset. However, "
-                              "for this to work, the dataset module should "
-                              "support customizing rows. Currently only "
-                              "airline and airline_ext do so!"))
+                        help=(
+                            "Subset of rows in the datasets to use. Useful for test running "
+                            "benchmarks on small amounts of data. WARNING: Some datasets will "
+                            "give incorrect accuracy results if nrows is specified as they have "
+                            "predefined train/test splits."))
     parser.add_argument("-warmup", action="store_true",
                         help=("Whether to run a small benchmark (fraud) as a warmup"))
     parser.add_argument("-verbose", action="store_true", help="Produce verbose output")
@@ -119,7 +119,7 @@ def main():
     if args.warmup:
         benchmark(args, os.path.join(args.root, "fraud"), "fraud")
     if args.dataset == 'all':
-        args.dataset = 'airline,bosch,fraud,higgs,year'
+        args.dataset = 'airline,bosch,fraud,higgs,year,epsilon,cover_type'
     results = {}
     for dataset in args.dataset.split(","):
         folder = os.path.join(args.root, dataset)

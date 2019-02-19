@@ -38,6 +38,8 @@ def get_metrics(data, pred):
         return regression_metrics(data.y_test, pred)
     if data.learning_task == LearningTask.CLASSIFICATION:
         return classification_metrics(data.y_test, pred)
+    if data.learning_task == LearningTask.MULTICLASS_CLASSIFICATION:
+        return classification_metrics_multilabel(data.y_test, pred)
     raise ValueError("No metrics defined for learning task: " + str(data.learning_task))
 
 
@@ -61,14 +63,14 @@ def classification_metrics(y_true, y_prob, threshold=0.5):
     return evaluate_metrics(y_true, y_pred, metrics)
 
 
-def classification_metrics_multilabel(y_true, y_pred, labels):
+def classification_metrics_multilabel(y_true, y_pred):
     metrics = {
         "Accuracy": sklm.accuracy_score,
-        "Precision": lambda real, pred: sklm.precision_score(real, pred, labels,
+        "Precision": lambda real, pred: sklm.precision_score(real, pred,
                                                              average="weighted"),
-        "Recall": lambda real, pred: sklm.recall_score(real, pred, labels,
+        "Recall": lambda real, pred: sklm.recall_score(real, pred,
                                                        average="weighted"),
-        "F1": lambda real, pred: sklm.f1_score(real, pred, labels,
+        "F1": lambda real, pred: sklm.f1_score(real, pred,
                                                average="weighted"),
     }
     return evaluate_metrics(y_true, y_pred, metrics)
