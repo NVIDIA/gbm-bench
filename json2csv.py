@@ -27,75 +27,80 @@
 
 import sys
 import json
-import string
 import os
 import csv
 
-Timings = ["train_time", "test_time"]
-Metrics = ["AUC", "Accuracy", "F1", "Precision", "Recall"]
-AllMetrics = Timings + Metrics
+TIMINGS = ["train_time", "test_time"]
+METRICS = ["AUC", "Accuracy", "F1", "Precision", "Recall"]
+ALLMETRICS = TIMINGS + METRICS
 
-def loadPerfData(jsonFile):
-    fp = open(jsonFile, "r")
-    data = json.load(fp)
-    fp.close()
+
+def load_perf_data(json_file):
+    file = open(json_file, "r")
+    data = json.load(file)
+    file.close()
     return data
 
-def loadAllPerfData(files):
+
+def load_all_perf_data(files):
     data = {}
-    for jsonFile in sys.argv[1:]:
-        dataset = os.path.basename(jsonFile)
-        dataset = string.replace(dataset, ".json", "")
-        data[dataset] = loadPerfData(jsonFile)
+    for json_file in files:
+        dataset = os.path.basename(json_file)
+        dataset = dataset.replace(".json", "")
+        data[dataset] = load_perf_data(json_file)
     return data
 
-def getAllDatasets(data):
+
+def get_all_datasets(data):
     return data.keys()
 
-def getAllAlgos(data):
+
+def get_all_algos(data):
     algos = {}
     for dset in data.keys():
         for algo in data[dset].keys():
             algos[algo] = 1
     return algos.keys()
 
-def readFromDict(hashmap, key, defVal="-na-"):
-    d = hashmap[key] if key in hashmap else defVal
-    return d
 
-def combinePerfData(data, datasets, algos):
-    allData = {}
+def read_from_dict(hashmap, key, def_val="-na-"):
+    return hashmap[key] if key in hashmap else def_val
+
+
+def combine_perf_data(data, datasets, algos):
+    all_data = {}
     for dataset in datasets:
         out = []
-        dset = readFromDict(data, dataset, {})
+        dset = read_from_dict(data, dataset, {})
         for algo in algos:
-            algoData = readFromDict(dset, algo, {})
+            algo_data = read_from_dict(dset, algo, {})
             perf = [algo]
-            for timing in Timings:
-                perf.append(readFromDict(algoData, timing))
-            metricData = readFromDict(algoData, "accuracy", {})
-            for metric in Metrics:
-                perf.append(readFromDict(metricData, metric))
+            for timing in TIMINGS:
+                perf.append(read_from_dict(algo_data, timing))
+            metric_data = read_from_dict(algo_data, "accuracy", {})
+            for metric in METRICS:
+                perf.append(read_from_dict(metric_data, metric))
             out.append(perf)
-        allData[dataset] = out
-    return allData
+        all_data[dataset] = out
+    return all_data
 
-def writeCsv(allData, datasets):
+
+def write_csv(all_data, datasets):
     writer = csv.writer(sys.stdout)
     for dataset in sorted(datasets):
-        header = [dataset] + AllMetrics
+        header = [dataset] + ALLMETRICS
         writer.writerow(header)
-        for row in allData[dataset]:
+        for row in all_data[dataset]:
             writer.writerow(row)
-    return
+
 
 def main():
-    data = loadAllPerfData(sys.argv[1:])
-    datasets = getAllDatasets(data)
-    algos = getAllAlgos(data)
-    table = combinePerfData(data, datasets, algos)
-    writeCsv(table, datasets)
-    return
+    data = load_all_perf_data(sys.argv[1:])
+    datasets = get_all_datasets(data)
+    algos = get_all_algos(data)
+    table = combine_perf_data(data, datasets, algos)
+    write_csv(table, datasets)
+
 
 if __name__ == '__main__':
     main()

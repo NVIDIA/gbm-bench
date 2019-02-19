@@ -30,6 +30,15 @@
 
 import numpy as np
 import sklearn.metrics as sklm
+from datasets import LearningTask
+
+
+def get_metrics(data, pred):
+    if data.learning_task == LearningTask.REGRESSION:
+        return regression_metrics(data.y_test, pred)
+    if data.learning_task == LearningTask.CLASSIFICATION:
+        return classification_metrics(data.y_test, pred)
+    raise ValueError("No metrics defined for learning task: " + str(data.learning_task))
 
 
 def evaluate_metrics(y_true, y_pred, metrics):
@@ -39,58 +48,36 @@ def evaluate_metrics(y_true, y_pred, metrics):
     return res
 
 
-def classification_metrics_binary_prob(y_true, y_prob, threshold=0.5):
+def classification_metrics(y_true, y_prob, threshold=0.5):
     y_pred = np.where(y_prob > threshold, 1, 0)
     metrics = {
-        "Accuracy":  sklm.accuracy_score,
-        "Precision": sklm.precision_score,
-        "Recall":    sklm.recall_score,
-        "Log_Loss":  lambda real, pred: sklm.log_loss(real, y_prob, eps=1e-5),
+        "Accuracy": sklm.accuracy_score,
+        "Log_Loss": lambda real, pred: sklm.log_loss(real, y_prob, eps=1e-5),
         # yes, I'm using y_prob here!
-        "AUC":       lambda real, pred: sklm.roc_auc_score(real, y_prob),
-        "F1":        sklm.f1_score,
+        "AUC": lambda real, pred: sklm.roc_auc_score(real, y_prob),
+        "Precision": sklm.precision_score,
+        "Recall": sklm.recall_score,
     }
     return evaluate_metrics(y_true, y_pred, metrics)
 
 
 def classification_metrics_multilabel(y_true, y_pred, labels):
     metrics = {
-        "Accuracy":  sklm.accuracy_score,
+        "Accuracy": sklm.accuracy_score,
         "Precision": lambda real, pred: sklm.precision_score(real, pred, labels,
                                                              average="weighted"),
-        "Recall":    lambda real, pred: sklm.recall_score(real, pred, labels,
-                                                          average="weighted"),
-        "F1":        lambda real, pred: sklm.f1_score(real, pred, labels,
-                                                      average="weighted"),
-    }
-    return evaluate_metrics(y_true, y_pred, metrics)
-
-
-def classification_metrics_average(y_true, y_pred, avg):
-    metrics = {
-        "Accuracy":  sklm.accuracy_score,
-        "Precision": lambda real, pred: sklm.precision_score(real, pred, average=avg),
-        "Recall":    lambda real, pred: sklm.recall_score(real, pred, average=avg),
-        "F1":        lambda real, pred: sklm.f1_score(real, pred, average=avg),
-    }
-    return evaluate_metrics(y_true, y_pred, metrics)
-
-
-def classification_metrics(y_true, y_pred):
-    metrics = {
-        "Accuracy":  sklm.accuracy_score,
-        "Precision": sklm.precision_score,
-        "Recall":    sklm.recall_score,
-        "AUC":       sklm.roc_auc_score,
-        "F1":        sklm.f1_score,
+        "Recall": lambda real, pred: sklm.recall_score(real, pred, labels,
+                                                       average="weighted"),
+        "F1": lambda real, pred: sklm.f1_score(real, pred, labels,
+                                               average="weighted"),
     }
     return evaluate_metrics(y_true, y_pred, metrics)
 
 
 def regression_metrics(y_true, y_pred):
     metrics = {
-        "MeanAbsError":       sklm.mean_absolute_error,
-        "MeanSquaredError":   sklm.mean_squared_error,
+        "MeanAbsError": sklm.mean_absolute_error,
+        "MeanSquaredError": sklm.mean_squared_error,
         "MedianAbsError": sklm.median_absolute_error,
     }
     return evaluate_metrics(y_true, y_pred, metrics)

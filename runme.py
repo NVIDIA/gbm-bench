@@ -25,36 +25,50 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import ast
 import os
 import sys
 import argparse
-import utils
 import json
-import warnings
+import time
+import ast
+import algorithms
+from metrics import get_metrics
+from datasets import prepare_dataset
 
-def parseArgs():
+
+def get_number_processors(args):
+    if args.cpus == 0:
+        return os.cpu_count()
+    return args.cpus
+
+
+def print_sys_info(args):
+    print("System  : %s" % sys.version)
+    print("Xgboost : %s" % os.getenv("XG_COMMIT_ID"))
+    print("LightGBM: %s" % os.getenv("LG_COMMIT_ID"))
+    print("CatBoost: %s" % os.getenv("CAT_COMMIT_ID"))
+    print("#jobs   : %d" % args.cpus)
+
+
+def parse_args():
     parser = argparse.ArgumentParser(
         description="Benchmark xgboost/lightgbm/catboost on real datasets")
-    parser.add_argument("-dataset", default="higgs", type=str,
-                        help="The dataset to be used for benchmarking")
-    parser.add_argument("-root", default="/datasets",
+    parser.add_argument("-dataset", default="all", type=str,
+                        help="The dataset to be used for benchmarking. 'all' for all datasets.")
+    parser.add_argument("-root", default="/opt/gbm-datasets",
                         type=str, help="The root datasets folder")
-    parser.add_argument("-benchmarks", default="all", type=str,
-                        help=("Comma-separated list of benchmarks to run; "
+    parser.add_argument("-algorithm", default="all", type=str,
+                        help=("Comma-separated list of algorithms to run; "
                               "'all' run all"))
-    parser.add_argument("-gpus", default=1, type=int,
+    parser.add_argument("-gpus", default=-1, type=int,
                         help=("#GPUs to use for the benchmarks; "
-                              "ignored when not supported"))
+                              "ignored when not supported. Default is to use all."))
     parser.add_argument("-cpus", default=0, type=int,
                         help=("#CPUs to use for the benchmarks; "
                               "0 means multiprocessing.cpu_count()"))
     parser.add_argument("-output", default=None, type=str,
                         help="Output json file with runtime/accuracy stats")
-    parser.add_argument("-maxdepth", default=None, type=int,
-                        help=("Max-depth of trees. Default is as specified in "
-                              "the respective dataset configuration"))
-    parser.add_argument("-ntrees", default=None, type=int,
+    parser.add_argument("-ntrees", default=500, type=int,
                         help=("Number of trees. Default is as specified in "
                               "the respective dataset configuration"))
     parser.add_argument("-nrows", default=None, type=int,
@@ -63,117 +77,60 @@ def parseArgs():
                               "for this to work, the dataset module should "
                               "support customizing rows. Currently only "
                               "airline and airline_ext do so!"))
-    parser.add_argument("-extra", default='{}',
-                        help="Extra arguments as a python dictionary")
     parser.add_argument("-warmup", action="store_true",
                         help=("Whether to run a small benchmark (fraud) as a warmup"))
     parser.add_argument("-verbose", action="store_true", help="Produce verbose output")
+    parser.add_argument("-extra", default='{}', help="Extra arguments as a python dictionary")
     args = parser.parse_args()
     # default value for output json file
     if not args.output:
         args.output = "%s.json" % args.dataset
     return args
 
-# add extra parameters for benchmarks (if present)
-def addExtraParams(params, extraParams, bName):
-    # multi gpu case
-    if "n_gpus" in extraParams:
-        if "xgb" in bName:
-            params["n_gpus"] = extraParams["n_gpus"]
-        else:
-            print("ignoring 'n_gpus': 'n_gpus' currently only applies to 'xgboost'")
-    # if need to customize tree depth
-    if "maxdepth" in extraParams:
-        if "xgb" in bName:
-            params["max_depth"] = extraParams["maxdepth"]
-            params["max_leaves"] = 2**extraParams["maxdepth"]
-        elif "lgbm" in bName:
-            params["num_leaves"] = 2**extraParams["maxdepth"]
-        elif "cat" in bName:
-            params["depth"] = extraParams["maxdepth"]
-        elif "skl" in bName:
-            params["max_depth"] = extraParams["maxdepth"]
-            params["max_leaf_nodes"] = 2**extraParams["maxdepth"]
-            # if need to customize number of boosters
-    if "ntrees" in extraParams:
-        if "xgb" in bName or "lgbm" in bName:
-            params["num_round"] = extraParams["ntrees"]
-        elif "cat" in bName:
-            params["iterations"] = extraParams["ntrees"]
-        elif "skl" in bName:
-            params["n_estimators"] = extraParams["ntrees"]
-    if "verbose" in extraParams:
-        if "xgb" in bName:
-            params["debug_verbose"] = 3 if extraParams["verbose"] else 0
-        elif "skl" in bName:
-            params["verbose"] = 2 if extraParams["verbose"] else 0
-
-    # if need to pass other parameters directly to the benchmark
-    if "extra" in extraParams:
-        params.update(extraParams["extra"])
-    return
 
 # benchmarks a single dataset
-def benchmark(dbFolder, module, benchmarks, extra_params, nrows):
-    warnings.filterwarnings("ignore")
-    data = module.prepare(dbFolder, nrows)
-    funcs = module.benchmarks
+def benchmark(args, dataset_folder, dataset):
+    data = prepare_dataset(dataset_folder, dataset, args.nrows)
     results = {}
-    # "all" runs all benchmarks
-    if benchmarks[0] == "all":
-        benchmarks = funcs.keys()
-    for name in benchmarks:
-        enabled, cls, metrics, params = funcs[name]
-        params = params.copy()
-        if not enabled:
-            print("Skipping '%s'... " % name)
-            continue
-        addExtraParams(params, extra_params, name)
-        print("Running '%s' ..." % name)
-
-        runner = cls(data, params)
+    # "all" runs all algorithms
+    if args.algorithm == "all":
+        args.algorithm = "xgb-gpu,xgb-cpu,lgbm-cpu,lgbm-gpu,cat-cpu,cat-gpu"
+    for alg in args.algorithm.split(","):
+        print("Running '%s' ..." % alg)
+        runner = algorithms.Algorithm.create(alg, data)
         with runner:
-            (prepare_time, train_time, test_time) = runner.run()
-            y_test = runner.y_test_matrix()
-            y_pred = runner.y_pred
-            #print(type(y_test))
-            #print(type(y_pred))
-            results[name] = {
-                "prepare_time": prepare_time,
+            start = time.time()
+            runner.fit(data, args)
+            train_time = time.time() - start
+            pred = runner.test(data)
+            results[alg] = {
                 "train_time": train_time,
-                "test_time":  test_time,
-                "accuracy":   metrics(y_test, y_pred),
+                "accuracy": get_metrics(data, pred),
             }
 
     return results
 
+
 def main():
-    args = parseArgs()
-    if args.cpus > 0:
-        utils.number_processors_override = args.cpus
-    utils.print_sys_info()
-    folder = os.path.join(args.root, args.dataset)
-    benchmarks = args.benchmarks.split(",")
-    # TODO: this is a HACK to support dynamic loading of modules at runtime!
-    module = __import__(args.dataset)
-    extra_params = {"n_gpus": args.gpus}
-    if args.maxdepth is not None:
-        extra_params["maxdepth"] = args.maxdepth
-    if args.ntrees is not None:
-        extra_params["ntrees"] = args.ntrees
-    extra_params["extra"] = ast.literal_eval(args.extra)
-    extra_params["verbose"] = args.verbose
+    args = parse_args()
+    args.cpus = get_number_processors(args)
+    args.extra = ast.literal_eval(args.extra)
+    print_sys_info(args)
     if args.warmup:
-        warmup_extra_params = {"n_gpus": args.gpus}
-        benchmark(os.path.join(args.root, "fraud"), __import__("fraud"),
-                  benchmarks, warmup_extra_params, args.nrows)
-    results = benchmark(folder, module, benchmarks, extra_params, args.nrows)
+        benchmark(args, os.path.join(args.root, "fraud"), "fraud")
+    if args.dataset == 'all':
+        args.dataset = 'airline,bosch,fraud,higgs,year'
+    results = {}
+    for dataset in args.dataset.split(","):
+        folder = os.path.join(args.root, dataset)
+        results.update({dataset: benchmark(args, folder, dataset)})
+        print(json.dumps({dataset: results[dataset]}, indent=2, sort_keys=True))
     output = json.dumps(results, indent=2, sort_keys=True)
-    print(output)
-    fp = open(args.output, "w")
-    fp.write(output + "\n")
-    fp.close()
+    output_file = open(args.output, "w")
+    output_file.write(output + "\n")
+    output_file.close()
     print("Results written to file '%s'" % args.output)
+
 
 if __name__ == "__main__":
     main()

@@ -42,7 +42,8 @@ RUN conda install \
         scipy \
         six \
         tqdm && \
-    conda clean -ya
+        conda clean -ya && \
+        pip install kaggle
 
 # cmake
 ENV CMAKE_SHORT_VERSION 3.12
@@ -128,31 +129,3 @@ RUN git config --global http.sslVerify false && \
     cd ../python-package && \
     python setup.py install
 
-# dask et.al (for multi-node xgboost runs)
-EXPOSE 8786
-EXPOSE 8787
-RUN git clone https://github.com/dask/dask.git /opt/dask && \
-    cd /opt/dask && \
-    python setup.py install
-RUN git clone https://github.com/rapidsai/dask-xgboost /opt/dask-xgboost && \
-    cd /opt/dask-xgboost && \
-    python setup.py install
-RUN conda install -c rapidsai -c nvidia -c numba -c conda-forge -c defaults \
-        cffi \
-        cudf=0.2.0 \
-        llvmlite \
-        numba \
-        nvstrings \
-        pandas=0.20.3 \
-        pyarrow && \
-    conda clean -ya && \
-    pip install kaggle
-ENV NUMBAPRO_NVVM=/usr/local/cuda/nvvm/lib64/libnvvm.so
-ENV NUMBAPRO_LIBDEVICE=/usr/local/cuda/nvvm/libdevice/
-RUN git clone https://github.com/rapidsai/dask-cudf /opt/dask-cudf && \
-    cd /opt/dask-cudf && \
-    python setup.py install
-
-# the benchmark
-COPY . /opt/gbm-bench
-RUN chmod -R a+rw /opt/gbm-bench
