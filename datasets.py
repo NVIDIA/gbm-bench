@@ -28,6 +28,7 @@ from enum import Enum
 import pickle
 import numpy as np
 from sklearn.model_selection import train_test_split
+from sklearn.datasets import load_svmlight_file
 
 import pandas as pd
 
@@ -233,7 +234,6 @@ def prepare_epsilon(dataset_folder, nrows):
     if not os.path.isfile(local_url_test):
         urlretrieve(url_test, local_url_test)
 
-    from sklearn.datasets import load_svmlight_file
     X_train, y_train = load_svmlight_file(local_url_train,
                                           dtype=np.float32)
     X_test, y_test = load_svmlight_file(local_url_test,
@@ -259,7 +259,7 @@ def prepare_epsilon(dataset_folder, nrows):
     return data
 
 
-def prepare_cover_type(dataset_folder, nrows):  # pylint: disable=unused-argument
+def prepare_covtype(dataset_folder, nrows):  # pylint: disable=unused-argument
     from sklearn.datasets import fetch_covtype
     X, y = fetch_covtype(return_X_y=True)  # pylint: disable=unexpected-keyword-arg
     if nrows is not None:
