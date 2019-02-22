@@ -85,6 +85,9 @@ class XgbAlgorithm(Algorithm):
         elif data.learning_task == LearningTask.CLASSIFICATION:
             params["objective"] = "binary:logistic"
             params["scale_pos_weight"] = len(data.y_train) / np.count_nonzero(data.y_train)
+        elif data.learning_task == LearningTask.MULTICLASS_CLASSIFICATION:
+            params["objective"] = "multi:softmax"
+            params["num_class"] = np.max(data.y_test) + 1
         params.update(args.extra)
         return params
 
@@ -130,6 +133,9 @@ class LgbmAlgorithm(Algorithm):
         elif data.learning_task == LearningTask.CLASSIFICATION:
             params["objective"] = "binary"
             params["scale_pos_weight"] = len(data.y_train) / np.count_nonzero(data.y_train)
+        elif data.learning_task == LearningTask.MULTICLASS_CLASSIFICATION:
+            params["objective"] = "multiclass"
+            params["num_class"] = np.max(data.y_test) + 1
         params.update(args.extra)
         return params
 
@@ -138,6 +144,9 @@ class LgbmAlgorithm(Algorithm):
         self.model = lgb.train(params, self.dtrain, args.ntrees)
 
     def test(self, data):
+        if data.learning_task == LearningTask.MULTICLASS_CLASSIFICATION:
+            prob = self.model.predict(data.X_test)
+            return np.argmax(prob, axis=1)
         return self.model.predict(data.X_test)
 
     def __exit__(self, exc_type, exc_value, traceback):
@@ -174,6 +183,9 @@ class CatAlgorithm(Algorithm):
         elif data.learning_task == LearningTask.CLASSIFICATION:
             params["objective"] = "Logloss"
             params["scale_pos_weight"] = len(data.y_train) / np.count_nonzero(data.y_train)
+        elif data.learning_task == LearningTask.MULTICLASS_CLASSIFICATION:
+            params["objective"] = "MultiClassOneVsAll"
+            params["classes_count"] = np.max(data.y_test) + 1
         params.update(args.extra)
         return params
 
@@ -185,6 +197,9 @@ class CatAlgorithm(Algorithm):
 
     def test(self, data):
         dtest = cat.Pool(data.X_test)
+        if data.learning_task == LearningTask.MULTICLASS_CLASSIFICATION:
+            prob = self.model.predict(dtest)
+            return np.argmax(prob, axis=1)
         return self.model.predict(dtest)
 
     def __exit__(self, exc_type, exc_value, traceback):
