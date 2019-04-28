@@ -26,13 +26,15 @@ $ mkdir gbm-datasets
 ```
 Upon launching docker you will pass this folder as well as the location of the kaggle API key as volumes to the container.
 
-| Name                                                                | Rows   | Columns | Task           |
-|---------------------------------------------------------------------|--------|---------|----------------|
-| [airline](http://kt.ijs.si/elena_ikonomovska/data.html)             | 115M   | 13      | Classification |
-| [bosch](https://www.kaggle.com/c/bosch-production-line-performance) | 1.184M | 968     | Classification |
-| [fraud](https://www.kaggle.com/mlg-ulb/creditcardfraud)             | 285K   | 28      | Classification |
-| [higgs](https://archive.ics.uci.edu/ml/datasets/HIGGS)              | 11M    | 28      | Classification |
-| [year](https://archive.ics.uci.edu/ml/datasets/yearpredictionmsd)   | 515K   | 90      | Regression     |
+| Name                                                                           | Rows   | Columns | Task           |
+|--------------------------------------------------------------------------------|--------|---------|----------------|
+| [airline](http://kt.ijs.si/elena_ikonomovska/data.html)                        | 115M   | 13      | Classification |
+| [bosch](https://www.kaggle.com/c/bosch-production-line-performance)            | 1.184M | 968     | Classification |
+| [fraud](https://www.kaggle.com/mlg-ulb/creditcardfraud)                        | 285K   | 28      | Classification |
+| [higgs](https://archive.ics.uci.edu/ml/datasets/HIGGS)                         | 11M    | 28      | Classification |
+| [year](https://archive.ics.uci.edu/ml/datasets/yearpredictionmsd)              | 515K   | 90      | Regression     |
+| [covtype](https://archive.ics.uci.edu/ml/datasets/covertype)                   | 581K   | 54      | Multiclass     |
+| [epsilon](https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/binary.html) | 500K   | 2000    | Classification |
 
 # Benchmarking
 This section assumes that one has elevated permissions on the system where this
@@ -50,30 +52,44 @@ docker run --runtime=nvidia -it --rm \
 ```
 The above command launches an interactive session and mounts the dataset folder, the gbm-bench repo and your kaggle API key inside the container.
 
-## Running a dataset
+## Running benchmarks
+Benchmarks are launched from the python runme.py script
 ```bash
-  user@container$ cd /opt/gbm-bench
-  user@container$ ./runme.py -root ../gbm-datasets -dataset football
-  user@container$ cat ./gbm-bench/football.json
+python runme.py --help
+usage: runme.py [-h] [-dataset DATASET] [-root ROOT] [-algorithm ALGORITHM]
+                [-gpus GPUS] [-cpus CPUS] [-output OUTPUT] [-ntrees NTREES]
+                [-nrows NROWS] [-warmup] [-verbose] [-extra EXTRA]
+
+Benchmark xgboost/lightgbm/catboost on real datasets
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -dataset DATASET      The dataset to be used for benchmarking. 'all' for all
+                        datasets.
+  -root ROOT            The root datasets folder
+  -algorithm ALGORITHM  Comma-separated list of algorithms to run; 'all' run
+                        all
+  -gpus GPUS            #GPUs to use for the benchmarks; ignored when not
+                        supported. Default is to use all.
+  -cpus CPUS            #CPUs to use for the benchmarks; 0 means
+                        psutil.cpu_count(logical=False)
+  -output OUTPUT        Output json file with runtime/accuracy stats
+  -ntrees NTREES        Number of trees. Default is as specified in the
+                        respective dataset configuration
+  -nrows NROWS          Subset of rows in the datasets to use. Useful for test
+                        running benchmarks on small amounts of data. WARNING:
+                        Some datasets will give incorrect accuracy results if
+                        nrows is specified as they have predefined train/test
+                        splits.
+  -warmup               Whether to run a small benchmark (fraud) as a warmup
+  -verbose              Produce verbose output
+  -extra EXTRA          Extra arguments as a python dictionary
 ```
 
-
-# Trouble shooting
-## [LightGBM] [Warning] boost::filesystem::create_directories: Permission denied: ...
+As an example, launch the xgb-gpu algorithm on the year dataset.
 ```bash
-export BOOST_COMPUTE_USE_OFFLINE_CACHE=0
+python runme.py -dataset year -algorithm xgb-gpu
 ```
-Reference: Issue [here](https://github.com/Microsoft/LightGBM/issues/1531)
-
-## Warning! catboost sets max-thread-count to 56!
-Pass a `-cpus 56` option to the 'runme.py'
-
-# Adding a new library to benchmark?
-Here are the steps involved in doing so:
-* Open utils.py
-* Create a new class there which inherits from the base class Benchmark
-* Customize/Overwrite the methods as per this library's needs
-
 # Yet another boosting tree benchmark?
 * This is more scriptable (and configurable) version (eg: for automated benchmarking)
 * Also adds CatBoost to the comparison list
