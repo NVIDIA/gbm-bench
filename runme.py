@@ -44,10 +44,13 @@ def get_number_processors(args):
 
 
 def print_sys_info(args):
+    import xgboost
+    import lightgbm
+    import catboost
     print("System  : %s" % sys.version)
-    print("Xgboost : %s" % os.getenv("XG_COMMIT_ID"))
-    print("LightGBM: %s" % os.getenv("LG_COMMIT_ID"))
-    print("CatBoost: %s" % os.getenv("CAT_COMMIT_ID"))
+    print("Xgboost : %s" % xgboost.__version__)
+    print("LightGBM: %s" % lightgbm.__version__)
+    print("CatBoost: %s" % catboost.__version__)
     print("#jobs   : %d" % args.cpus)
 
 
