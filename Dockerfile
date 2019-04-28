@@ -37,7 +37,8 @@ RUN conda install \
         pandas \
         Pillow \
         pydot \
-        pylint \
+        pylint\
+        psutil\
         scikit-learn \
         scipy \
         six \
