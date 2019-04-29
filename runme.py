@@ -31,8 +31,8 @@ import argparse
 import json
 import time
 import ast
-import algorithms
 import psutil
+import algorithms
 from metrics import get_metrics
 from datasets import prepare_dataset
 
