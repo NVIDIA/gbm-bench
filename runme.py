@@ -31,6 +31,7 @@ import argparse
 import json
 import time
 import ast
+import psutil
 import algorithms
 from metrics import get_metrics
 from datasets import prepare_dataset
@@ -38,15 +39,18 @@ from datasets import prepare_dataset
 
 def get_number_processors(args):
     if args.cpus == 0:
-        return os.cpu_count()
+        return psutil.cpu_count(logical=False)
     return args.cpus
 
 
 def print_sys_info(args):
+    import xgboost
+    import lightgbm
+    import catboost
     print("System  : %s" % sys.version)
-    print("Xgboost : %s" % os.getenv("XG_COMMIT_ID"))
-    print("LightGBM: %s" % os.getenv("LG_COMMIT_ID"))
-    print("CatBoost: %s" % os.getenv("CAT_COMMIT_ID"))
+    print("Xgboost : %s" % xgboost.__version__)
+    print("LightGBM: %s" % lightgbm.__version__)
+    print("CatBoost: %s" % catboost.__version__)
     print("#jobs   : %d" % args.cpus)
 
 
@@ -65,7 +69,7 @@ def parse_args():
                               "ignored when not supported. Default is to use all."))
     parser.add_argument("-cpus", default=0, type=int,
                         help=("#CPUs to use for the benchmarks; "
-                              "0 means multiprocessing.cpu_count()"))
+                              "0 means psutil.cpu_count(logical=False)"))
     parser.add_argument("-output", default=None, type=str,
                         help="Output json file with runtime/accuracy stats")
     parser.add_argument("-ntrees", default=500, type=int,

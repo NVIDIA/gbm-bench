@@ -81,7 +81,7 @@ class XgbAlgorithm(Algorithm):
         params.update({"max_leaves": 256,
                        "nthread": args.cpus, "n_gpus": args.gpus})
         if data.learning_task == LearningTask.REGRESSION:
-            params["objective"] = "reg:linear"
+            params["objective"] = "reg:squarederror"
         elif data.learning_task == LearningTask.CLASSIFICATION:
             params["objective"] = "binary:logistic"
             params["scale_pos_weight"] = len(data.y_train) / np.count_nonzero(data.y_train)
