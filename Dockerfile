@@ -42,9 +42,11 @@ RUN conda install \
         scikit-learn \
         scipy \
         six \
+        dask \
+        distributed \
         tqdm && \
         conda clean -ya && \
-        pip install kaggle
+        pip install kaggle gputil
 
 # cmake
 ENV CMAKE_SHORT_VERSION 3.12
