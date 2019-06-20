@@ -25,18 +25,23 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from abc import ABC, abstractmethod
+import time
 import numpy as np
-import xgboost as xgb
 import lightgbm as lgb
+import GPUtil
+import dask.dataframe as dd
+from dask.distributed import Client, LocalCluster
+import xgboost as xgb
 import catboost as cat
 from datasets import LearningTask
-import dask.dataframe as dd
-import time
-import GPUtil
-from dask.distributed import Client, LocalCluster
 
 
 class Timer:
+    def __init__(self):
+        self.start = None
+        self.end = None
+        self.interval = None
+
     def __enter__(self):
         self.start = time.clock()
         return self
@@ -48,7 +53,7 @@ class Timer:
 
 class Algorithm(ABC):
     @staticmethod
-    def create(name):
+    def create(name):  # pylint: disable=too-many-return-statements
         if name == 'xgb-gpu':
             return XgbGPUHistAlgorithm()
         if name == 'xgb-gpu-dask':
@@ -64,6 +69,9 @@ class Algorithm(ABC):
         if name == 'cat-gpu':
             return CatGPUAlgorithm()
         raise ValueError("Unknown algorithm: " + name)
+
+    def __init__(self):
+        self.model = None
 
     @abstractmethod
     def fit(self, data, args):
@@ -103,20 +111,18 @@ class XgbAlgorithm(Algorithm):
         return params
 
     def fit(self, data, args):
-        self.dtrain = xgb.DMatrix(data.X_train, data.y_train)
-        self.dtest = xgb.DMatrix(data.X_test, data.y_test)
+        dtrain = xgb.DMatrix(data.X_train, data.y_train)
         params = self.configure(data, args)
         with Timer() as t:
-            self.model = xgb.train(params, self.dtrain, args.ntrees)
+            self.model = xgb.train(params, dtrain, args.ntrees)
         return t.interval
 
     def test(self, data):
-        return self.model.predict(self.dtest)
+        dtest = xgb.DMatrix(data.X_test, data.y_test)
+        return self.model.predict(dtest)
 
     def __exit__(self, exc_type, exc_value, traceback):
         del self.model
-        del self.dtrain
-        del self.dtest
 
 
 class XgbGPUHistAlgorithm(XgbAlgorithm):
@@ -132,7 +138,7 @@ class XgbGPUHistDaskAlgorithm(XgbAlgorithm):
         params.update({"tree_method": "gpu_hist"})
         return params
 
-    def train(self, X, y, params, devices, args):
+    def train(self, X, y, params, devices, args):  # pylint: disable=too-many-arguments
         params['gpu_id'] = devices[xgb.rabit.get_rank()]
         dtrain = xgb.dask.create_worker_dmatrix(X, y)
         with Timer() as t:
@@ -143,19 +149,19 @@ class XgbGPUHistDaskAlgorithm(XgbAlgorithm):
         params = self.configure(data, args)
         devices = GPUtil.getAvailable(limit=32 if args.gpus < 0 else args.gpus)
         cluster = LocalCluster(n_workers=len(devices), threads_per_worker=args.cpus // len(devices),
-                              local_dir="/opt/gbm-datasets")
+                               local_dir="/opt/gbm-datasets")
         client = Client(cluster)
         partition_size = 100000
         try:
             X = dd.from_array(data.X_train, partition_size)
             y = dd.from_array(data.y_train, partition_size)
-        except:
+        except ValueError:
             X = dd.from_pandas(data.X_train, partition_size)
             y = dd.from_pandas(data.y_train, partition_size)
         result = xgb.dask.run(client, self.train, X, y, params, devices, args)
-        self.model, time = next(iter(result.values()))
+        self.model, train_time = next(iter(result.values()))
         client.close()
-        return time
+        return train_time
 
     def test(self, data):
         dtest = xgb.DMatrix(data.X_test, data.y_test)
@@ -189,11 +195,11 @@ class LgbmAlgorithm(Algorithm):
         return params
 
     def fit(self, data, args):
-        self.dtrain = lgb.Dataset(data.X_train, data.y_train,
-                                  free_raw_data=False)
+        dtrain = lgb.Dataset(data.X_train, data.y_train,
+                             free_raw_data=False)
         params = self.configure(data, args)
         with Timer() as t:
-            self.model = lgb.train(params, self.dtrain, args.ntrees)
+            self.model = lgb.train(params, dtrain, args.ntrees)
         return t.interval
 
     def test(self, data):
@@ -205,7 +211,6 @@ class LgbmAlgorithm(Algorithm):
     def __exit__(self, exc_type, exc_value, traceback):
         self.model.free_dataset()
         del self.model
-        del self.dtrain
 
 
 class LgbmCPUAlgorithm(LgbmAlgorithm):
@@ -239,12 +244,12 @@ class CatAlgorithm(Algorithm):
         return params
 
     def fit(self, data, args):
-        self.dtrain = cat.Pool(data.X_train, data.y_train)
+        dtrain = cat.Pool(data.X_train, data.y_train)
         params = self.configure(data, args)
         params["iterations"] = args.ntrees
         self.model = cat.CatBoost(params)
         with Timer() as t:
-            self.model.fit(self.dtrain)
+            self.model.fit(dtrain)
         return t.interval
 
     def test(self, data):
@@ -256,7 +261,6 @@ class CatAlgorithm(Algorithm):
 
     def __exit__(self, exc_type, exc_value, traceback):
         del self.model
-        del self.dtrain
 
 
 class CatCPUAlgorithm(CatAlgorithm):
