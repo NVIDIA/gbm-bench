@@ -29,7 +29,6 @@ import os
 import sys
 import argparse
 import json
-import time
 import ast
 import psutil
 import algorithms
@@ -101,11 +100,9 @@ def benchmark(args, dataset_folder, dataset):
         args.algorithm = "xgb-gpu,xgb-cpu,lgbm-cpu,lgbm-gpu,cat-cpu,cat-gpu"
     for alg in args.algorithm.split(","):
         print("Running '%s' ..." % alg)
-        runner = algorithms.Algorithm.create(alg, data)
+        runner = algorithms.Algorithm.create(alg)
         with runner:
-            start = time.time()
-            runner.fit(data, args)
-            train_time = time.time() - start
+            train_time = runner.fit(data, args)
             pred = runner.test(data)
             results[alg] = {
                 "train_time": train_time,

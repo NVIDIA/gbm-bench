@@ -25,29 +25,53 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from abc import ABC, abstractmethod
+import time
 import numpy as np
-import xgboost as xgb
 import lightgbm as lgb
+import GPUtil
+import dask.dataframe as dd
+from dask.distributed import Client, LocalCluster
+import xgboost as xgb
 import catboost as cat
 from datasets import LearningTask
 
 
+class Timer:
+    def __init__(self):
+        self.start = None
+        self.end = None
+        self.interval = None
+
+    def __enter__(self):
+        self.start = time.clock()
+        return self
+
+    def __exit__(self, *args):
+        self.end = time.clock()
+        self.interval = self.end - self.start
+
+
 class Algorithm(ABC):
     @staticmethod
-    def create(name, data):
+    def create(name):  # pylint: disable=too-many-return-statements
         if name == 'xgb-gpu':
-            return XgbGPUHistAlgorithm(data)
+            return XgbGPUHistAlgorithm()
+        if name == 'xgb-gpu-dask':
+            return XgbGPUHistDaskAlgorithm()
         if name == 'xgb-cpu':
-            return XgbCPUHistAlgorithm(data)
+            return XgbCPUHistAlgorithm()
         if name == 'lgbm-cpu':
-            return LgbmCPUAlgorithm(data)
+            return LgbmCPUAlgorithm()
         if name == 'lgbm-gpu':
-            return LgbmGPUAlgorithm(data)
+            return LgbmGPUAlgorithm()
         if name == 'cat-cpu':
-            return CatCPUAlgorithm(data)
+            return CatCPUAlgorithm()
         if name == 'cat-gpu':
-            return CatGPUAlgorithm(data)
+            return CatGPUAlgorithm()
         raise ValueError("Unknown algorithm: " + name)
+
+    def __init__(self):
+        self.model = None
 
     @abstractmethod
     def fit(self, data, args):
@@ -66,20 +90,15 @@ class Algorithm(ABC):
 
 
 # learning parameters shared by all algorithms, using the xgboost convention
-shared_params = {"max_depth": 8, "learning_rate": 0.1, "min_child_weight": 1,
+shared_params = {"max_depth": 8, "learning_rate": 0.1,
                  "reg_lambda": 1}
 
 
 class XgbAlgorithm(Algorithm):
-    def __init__(self, data):
-        self.model = None
-        self.dtrain = xgb.DMatrix(data.X_train, data.y_train)
-        self.dtest = xgb.DMatrix(data.X_test, data.y_test)
-
     def configure(self, data, args):
         params = shared_params.copy()
         params.update({"max_leaves": 256,
-                       "nthread": args.cpus, "n_gpus": args.gpus})
+                       "nthread": args.cpus})
         if data.learning_task == LearningTask.REGRESSION:
             params["objective"] = "reg:squarederror"
         elif data.learning_task == LearningTask.CLASSIFICATION:
@@ -92,23 +111,64 @@ class XgbAlgorithm(Algorithm):
         return params
 
     def fit(self, data, args):
+        dtrain = xgb.DMatrix(data.X_train, data.y_train)
         params = self.configure(data, args)
-        self.model = xgb.train(params, self.dtrain, args.ntrees)
+        with Timer() as t:
+            self.model = xgb.train(params, dtrain, args.ntrees)
+        return t.interval
 
     def test(self, data):
-        return self.model.predict(self.dtest)
+        dtest = xgb.DMatrix(data.X_test, data.y_test)
+        return self.model.predict(dtest)
 
     def __exit__(self, exc_type, exc_value, traceback):
         del self.model
-        del self.dtrain
-        del self.dtest
 
 
 class XgbGPUHistAlgorithm(XgbAlgorithm):
     def configure(self, data, args):
         params = super(XgbGPUHistAlgorithm, self).configure(data, args)
+        params.update({"tree_method": "gpu_hist", "n_gpus": args.gpus})
+        return params
+
+
+class XgbGPUHistDaskAlgorithm(XgbAlgorithm):
+    def configure(self, data, args):
+        params = super(XgbGPUHistDaskAlgorithm, self).configure(data, args)
         params.update({"tree_method": "gpu_hist"})
         return params
+
+    def train(self, X, y, params, devices, args):  # pylint: disable=too-many-arguments
+        params['gpu_id'] = devices[xgb.rabit.get_rank()]
+        dtrain = xgb.dask.create_worker_dmatrix(X, y)
+        with Timer() as t:
+            model = xgb.train(params, dtrain, args.ntrees)
+        return model, t.interval
+
+    def fit(self, data, args):
+        params = self.configure(data, args)
+        devices = GPUtil.getAvailable(limit=32 if args.gpus < 0 else args.gpus)
+        cluster = LocalCluster(n_workers=len(devices), threads_per_worker=args.cpus // len(devices),
+                               local_dir="/opt/gbm-datasets")
+        client = Client(cluster)
+        partition_size = 100000
+        try:
+            X = dd.from_array(data.X_train, partition_size)
+            y = dd.from_array(data.y_train, partition_size)
+        except ValueError:
+            X = dd.from_pandas(data.X_train, partition_size)
+            y = dd.from_pandas(data.y_train, partition_size)
+        result = xgb.dask.run(client, self.train, X, y, params, devices, args)
+        self.model, train_time = next(iter(result.values()))
+        client.close()
+        return train_time
+
+    def test(self, data):
+        dtest = xgb.DMatrix(data.X_test, data.y_test)
+        return self.model.predict(dtest)
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        del self.model
 
 
 class XgbCPUHistAlgorithm(XgbAlgorithm):
@@ -119,11 +179,6 @@ class XgbCPUHistAlgorithm(XgbAlgorithm):
 
 
 class LgbmAlgorithm(Algorithm):
-    def __init__(self, data):
-        self.dtrain = lgb.Dataset(data.X_train, data.y_train,
-                                  free_raw_data=False)
-        self.model = None
-
     def configure(self, data, args):
         params = shared_params.copy()
         params.update({"max_leaves": 256,
@@ -140,8 +195,12 @@ class LgbmAlgorithm(Algorithm):
         return params
 
     def fit(self, data, args):
+        dtrain = lgb.Dataset(data.X_train, data.y_train,
+                             free_raw_data=False)
         params = self.configure(data, args)
-        self.model = lgb.train(params, self.dtrain, args.ntrees)
+        with Timer() as t:
+            self.model = lgb.train(params, dtrain, args.ntrees)
+        return t.interval
 
     def test(self, data):
         if data.learning_task == LearningTask.MULTICLASS_CLASSIFICATION:
@@ -152,7 +211,6 @@ class LgbmAlgorithm(Algorithm):
     def __exit__(self, exc_type, exc_value, traceback):
         self.model.free_dataset()
         del self.model
-        del self.dtrain
 
 
 class LgbmCPUAlgorithm(LgbmAlgorithm):
@@ -167,10 +225,6 @@ class LgbmGPUAlgorithm(LgbmAlgorithm):
 
 
 class CatAlgorithm(Algorithm):
-    def __init__(self, data):
-        self.dtrain = cat.Pool(data.X_train, data.y_train)
-        self.model = None
-
     def configure(self, data, args):
         params = shared_params.copy()
         params.update({
@@ -190,10 +244,13 @@ class CatAlgorithm(Algorithm):
         return params
 
     def fit(self, data, args):
+        dtrain = cat.Pool(data.X_train, data.y_train)
         params = self.configure(data, args)
         params["iterations"] = args.ntrees
         self.model = cat.CatBoost(params)
-        self.model.fit(self.dtrain)
+        with Timer() as t:
+            self.model.fit(dtrain)
+        return t.interval
 
     def test(self, data):
         dtest = cat.Pool(data.X_test)
@@ -204,7 +261,6 @@ class CatAlgorithm(Algorithm):
 
     def __exit__(self, exc_type, exc_value, traceback):
         del self.model
-        del self.dtrain
 
 
 class CatCPUAlgorithm(CatAlgorithm):
