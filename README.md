@@ -11,9 +11,7 @@ datasets used here are the same as in the above repo.
 # Setting up this repo
 ```bash
 
-  $ git clone git@gitlab.com:nvdevtech/gbm-bench.git
-  # The below link will be made active once we open-source this work
-  # $ git clone https://github.com/NVIDIA/gradient-boosted-benchmarks
+  $ git clone https://github.com/NVIDIA/gbm-bench.git
   $ cd gbm-bench
   $ docker build -t gbm-bench:9.2 .
 ```
