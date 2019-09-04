@@ -34,7 +34,7 @@ from dask.distributed import Client, LocalCluster
 import xgboost as xgb
 import catboost as cat
 from datasets import LearningTask
-
+import pandas as pd
 
 class Timer:
     def __init__(self):
@@ -128,7 +128,7 @@ class XgbAlgorithm(Algorithm):
 class XgbGPUHistAlgorithm(XgbAlgorithm):
     def configure(self, data, args):
         params = super(XgbGPUHistAlgorithm, self).configure(data, args)
-        params.update({"tree_method": "gpu_hist", "n_gpus": args.gpus})
+        params.update({"tree_method": "gpu_hist", "gpu_id": 0})
         return params
 
 
@@ -152,18 +152,21 @@ class XgbGPUHistDaskAlgorithm(XgbAlgorithm):
                                local_dir="/opt/gbm-datasets")
         client = Client(cluster)
         partition_size = 100000
-        try:
+        if isinstance(data.X_train,np.ndarray):
             X = dd.from_array(data.X_train, partition_size)
             y = dd.from_array(data.y_train, partition_size)
-        except ValueError:
+        else:
             X = dd.from_pandas(data.X_train, partition_size)
             y = dd.from_pandas(data.y_train, partition_size)
         result = xgb.dask.run(client, self.train, X, y, params, devices, args)
         self.model, train_time = next(iter(result.values()))
         client.close()
+        cluster.close()
         return train_time
 
     def test(self, data):
+        if isinstance(data.X_test,np.ndarray):
+            data.X_test = pd.DataFrame(data = data.X_test, columns = np.arange(0,data.X_test.shape[1]), index = np.arange(0,data.X_test.shape[0]))
         dtest = xgb.DMatrix(data.X_test, data.y_test)
         return self.model.predict(dtest)
 

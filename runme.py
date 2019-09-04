@@ -97,7 +97,7 @@ def benchmark(args, dataset_folder, dataset):
     results = {}
     # "all" runs all algorithms
     if args.algorithm == "all":
-        args.algorithm = "xgb-gpu,xgb-cpu,lgbm-cpu,lgbm-gpu,cat-cpu,cat-gpu"
+        args.algorithm = "xgb-gpu,xgb-cpu,xgb-gpu-dask,lgbm-cpu,lgbm-gpu,cat-cpu,cat-gpu"
     for alg in args.algorithm.split(","):
         print("Running '%s' ..." % alg)
         runner = algorithms.Algorithm.create(alg)
