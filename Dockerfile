@@ -1,4 +1,5 @@
-FROM nvidia/cuda:9.2-devel-ubuntu16.04
+ARG CUDA_VERSION
+FROM nvidia/cuda:$CUDA_VERSION-devel-ubuntu16.04
 
 # Install conda (and use python 3.5)
 RUN apt-get update && \
