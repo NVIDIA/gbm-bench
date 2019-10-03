@@ -14,11 +14,11 @@ datasets used here are the same as in the above repo.
   $ git clone https://github.com/NVIDIA/gbm-bench.git
   $ cd gbm-bench
 ```
-Create a docker image for cuda 10.1
+Create a docker image for cuda 10.0
 ```bash
-  $ docker build -t gbm-bench:10.1 . --build-args CUDA_VERSION=10.1
+  $ docker build -t gbm-bench:10.0 . --build-args CUDA_VERSION=10.0
 ```
-You can create docker images with different cuda versions as below. You will not be able to create an image for a cuda version greater than what is installed on your system.
+You can create docker images with different cuda versions as below. You will not be able to create an image for a cuda version greater than what is installed on your system. The GBM libraries may not support very recent versions of cuda.
 ```bash
   $ docker build -t gbm-bench:9.2 . --build-args CUDA_VERSION=9.2
 ```
@@ -53,9 +53,9 @@ docker run --runtime=nvidia -it --rm \
     -v {YOUR-LOCATION/gbm-datasets}:/opt/gbm-datasets \
     -v {YOUR-LOCATION/gbm-bench}:/opt/gbm-bench \
     -v {KAGGLE-API-LOCATION/.kaggle}:/root/.kaggle \
-     gbm-bench:10.1 /bin/bash
+     gbm-bench:10.0 /bin/bash
 ```
-The above command launches an interactive session and mounts the dataset folder, the gbm-bench repo and your kaggle API key inside the container. "gbm-bench:10.1" refers to the docker image, modify this if you are using a different cuda version.
+The above command launches an interactive session and mounts the dataset folder, the gbm-bench repo and your kaggle API key inside the container. "gbm-bench:10.0" refers to the docker image, modify this if you are using a different cuda version.
 
 ## Running benchmarks
 Benchmarks are launched from the python runme.py script
