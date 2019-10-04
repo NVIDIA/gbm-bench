@@ -1,7 +1,7 @@
 ARG CUDA_VERSION
 FROM nvidia/cuda:$CUDA_VERSION-devel-ubuntu16.04
 
-# Install conda (and use python 3.5)
+# Install conda (and use python 3.7)
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         build-essential \
@@ -19,11 +19,10 @@ RUN apt-get update && \
         zlib1g-dev && \
     rm -rf /var/lib/apt/*
 RUN curl -o /opt/miniconda.sh \
-        -O https://repo.continuum.io/miniconda/Miniconda3-4.4.10-Linux-x86_64.sh && \
+        -O https://repo.continuum.io/miniconda/Miniconda3-4.4.10-Linux-x86_64.sh  && \
     chmod +x /opt/miniconda.sh && \
     /opt/miniconda.sh -b -p /opt/conda && \
     /opt/conda/bin/conda update -n base conda && \
-    /opt/conda/bin/conda install python=3.6 && \
     rm /opt/miniconda.sh
 ENV PATH /opt/conda/bin:$PATH
 RUN conda install \
@@ -47,7 +46,8 @@ RUN conda install \
         distributed \
         tqdm && \
         conda clean -ya && \
-        pip install kaggle gputil
+        pip install kaggle dask-xgboost && \
+        conda install -c rapidsai-nightly dask-cuda
 
 # cmake
 ENV CMAKE_SHORT_VERSION 3.12
