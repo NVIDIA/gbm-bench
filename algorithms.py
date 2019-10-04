@@ -26,15 +26,17 @@
 
 from abc import ABC, abstractmethod
 import time
+import pandas as pd
 import numpy as np
 import lightgbm as lgb
-import GPUtil
 import dask.dataframe as dd
-from dask.distributed import Client, LocalCluster
+from dask.distributed import Client
+from dask_cuda import LocalCUDACluster
 import xgboost as xgb
 import catboost as cat
 from datasets import LearningTask
-import pandas as pd
+import dask_xgboost as dxgb
+
 
 class Timer:
     def __init__(self):
@@ -43,11 +45,11 @@ class Timer:
         self.interval = None
 
     def __enter__(self):
-        self.start = time.clock()
+        self.start = time.perf_counter()
         return self
 
     def __exit__(self, *args):
-        self.end = time.clock()
+        self.end = time.perf_counter()
         self.interval = self.end - self.start
 
 
@@ -58,6 +60,8 @@ class Algorithm(ABC):
             return XgbGPUHistAlgorithm()
         if name == 'xgb-gpu-dask':
             return XgbGPUHistDaskAlgorithm()
+        if name == 'xgb-gpu-dask-old':
+            return XgbGPUHistDaskOldAlgorithm()
         if name == 'xgb-cpu':
             return XgbCPUHistAlgorithm()
         if name == 'lgbm-cpu':
@@ -138,35 +142,68 @@ class XgbGPUHistDaskAlgorithm(XgbAlgorithm):
         params.update({"tree_method": "gpu_hist"})
         return params
 
-    def train(self, X, y, params, devices, args):  # pylint: disable=too-many-arguments
-        params['gpu_id'] = devices[xgb.rabit.get_rank()]
-        dtrain = xgb.dask.create_worker_dmatrix(X, y)
-        with Timer() as t:
-            model = xgb.train(params, dtrain, args.ntrees)
-        return model, t.interval
-
     def fit(self, data, args):
         params = self.configure(data, args)
-        devices = GPUtil.getAvailable(limit=32 if args.gpus < 0 else args.gpus)
-        cluster = LocalCluster(n_workers=len(devices), threads_per_worker=args.cpus // len(devices),
-                               local_dir="/opt/gbm-datasets")
+        cluster = LocalCUDACluster(n_workers=None if args.gpus < 0 else args.gpus,
+                                   local_directory="/opt/gbm-datasets", threads_per_worker=1)
         client = Client(cluster)
-        partition_size = 100000
-        if isinstance(data.X_train,np.ndarray):
+        partition_size = 1000
+        if isinstance(data.X_train, np.ndarray):
             X = dd.from_array(data.X_train, partition_size)
             y = dd.from_array(data.y_train, partition_size)
         else:
             X = dd.from_pandas(data.X_train, partition_size)
             y = dd.from_pandas(data.y_train, partition_size)
-        result = xgb.dask.run(client, self.train, X, y, params, devices, args)
-        self.model, train_time = next(iter(result.values()))
+        dtrain = xgb.dask.DaskDMatrix(client, X, y)
+        with Timer() as t:
+            output = xgb.dask.train(client, params, dtrain, num_boost_round=args.ntrees)
+        self.model = output['booster']
         client.close()
-        cluster.close()
-        return train_time
+        return t.interval
 
     def test(self, data):
-        if isinstance(data.X_test,np.ndarray):
-            data.X_test = pd.DataFrame(data = data.X_test, columns = np.arange(0,data.X_test.shape[1]), index = np.arange(0,data.X_test.shape[0]))
+        if isinstance(data.X_test, np.ndarray):
+            data.X_test = pd.DataFrame(data=data.X_test, columns=np.arange(0,
+                                                                           data.X_test.shape[1]),
+                                       index=np.arange(0, data.X_test.shape[0]))
+        dtest = xgb.DMatrix(data.X_test, data.y_test)
+        return self.model.predict(dtest)
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        del self.model
+
+
+class XgbGPUHistDaskOldAlgorithm(XgbAlgorithm):
+    def configure(self, data, args):
+        params = super(XgbGPUHistDaskOldAlgorithm, self).configure(data, args)
+        params.update({"tree_method": "gpu_hist", "nthread": 1})
+        return params
+
+    def fit(self, data, args):
+        params = self.configure(data, args)
+        cluster = LocalCUDACluster(n_workers=None if args.gpus < 0 else args.gpus,
+                                   local_directory="/opt/gbm-datasets")
+        client = Client(cluster)
+        partition_size = 1000
+        if isinstance(data.X_train, np.ndarray):
+            X = dd.from_array(data.X_train, partition_size)
+            y = dd.from_array(data.y_train, partition_size)
+        else:
+            X = dd.from_pandas(data.X_train, partition_size)
+            y = dd.from_pandas(data.y_train, partition_size)
+        X.columns = [str(i) for i in range(0, X.shape[1])]
+        with Timer() as t:
+            self.model = dxgb.train(client, params, X, y, num_boost_round=args.ntrees)
+
+        client.close()
+        return t.interval
+
+    def test(self, data):
+        if isinstance(data.X_test, np.ndarray):
+            data.X_test = pd.DataFrame(data=data.X_test, columns=np.arange(0,
+                                                                           data.X_test.shape[1]),
+                                       index=np.arange(0, data.X_test.shape[0]))
+        data.X_test.columns = [str(i) for i in range(0, data.X_test.shape[1])]
         dtest = xgb.DMatrix(data.X_test, data.y_test)
         return self.model.predict(dtest)
 

@@ -114,7 +114,7 @@ RUN git config --global http.sslVerify false && \
         -r \
         -o ../../.. \
         -DUSE_ARCADIA_PYTHON=no \
-        -DUSE_SYSTEM_PYTHON=3.5 \
+        -DUSE_SYSTEM_PYTHON=3.7\
         -DPYTHON_CONFIG=python3-config \
         -DCUDA_ROOT=$(dirname $(dirname $(which nvcc)))
 ENV PYTHONPATH=$PYTHONPATH:/opt/catboost/catboost/python-package
@@ -131,5 +131,6 @@ RUN git config --global http.sslVerify false && \
         -DUSE_NCCL=ON && \
     make -j4 && \
     cd ../python-package && \
+    pip uninstall -y xgboost && \
     python setup.py install
 
