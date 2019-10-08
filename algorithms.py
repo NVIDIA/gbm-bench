@@ -145,7 +145,8 @@ class XgbGPUHistDaskAlgorithm(XgbAlgorithm):
     def fit(self, data, args):
         params = self.configure(data, args)
         cluster = LocalCUDACluster(n_workers=None if args.gpus < 0 else args.gpus,
-                                   local_directory="/opt/gbm-datasets", threads_per_worker=1)
+                                   local_directory=args.root,
+                                   threads_per_worker=1)
         client = Client(cluster)
         partition_size = 1000
         if isinstance(data.X_train, np.ndarray):
@@ -182,7 +183,7 @@ class XgbGPUHistDaskOldAlgorithm(XgbAlgorithm):
     def fit(self, data, args):
         params = self.configure(data, args)
         cluster = LocalCUDACluster(n_workers=None if args.gpus < 0 else args.gpus,
-                                   local_directory="/opt/gbm-datasets")
+                                   local_directory=args.root)
         client = Client(cluster)
         partition_size = 1000
         if isinstance(data.X_train, np.ndarray):
