@@ -16,11 +16,11 @@ datasets used here are the same as in the above repo.
 ```
 Create a docker image for cuda 10.0
 ```bash
-  $ docker build -t gbm-bench:10.0 . --build-args CUDA_VERSION=10.0
+  $ docker build -t gbm-bench:10.0 . --build-arg CUDA_VERSION=10.0
 ```
 You can create docker images with different cuda versions as below. You will not be able to create an image for a cuda version greater than what is installed on your system. The GBM libraries may not support very recent versions of cuda.
 ```bash
-  $ docker build -t gbm-bench:9.2 . --build-args CUDA_VERSION=9.2
+  $ docker build -t gbm-bench:9.2 . --build-arg CUDA_VERSION=9.2
 ```
 
 # Datasets
