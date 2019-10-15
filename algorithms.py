@@ -151,11 +151,12 @@ class XgbGPUHistDaskAlgorithm(XgbAlgorithm):
         client = Client(cluster)
         partition_size = 10000
         if isinstance(data.X_train, np.ndarray):
-            X = da.from_array(data.X_train, partition_size)
+            X = da.from_array(data.X_train, (partition_size, data.X_train.shape[1]))
             y = da.from_array(data.y_train, partition_size)
         else:
-            X = dd.from_pandas(data.X_train, partition_size)
-            y = dd.from_pandas(data.y_train, partition_size)
+
+            X = dd.from_pandas(data.X_train, chunksize=partition_size)
+            y = dd.from_pandas(data.y_train, chunksize=partition_size)
         dtrain = xgb.dask.DaskDMatrix(client, X, y)
         with Timer() as t:
             output = xgb.dask.train(client, params, dtrain, num_boost_round=args.ntrees)
