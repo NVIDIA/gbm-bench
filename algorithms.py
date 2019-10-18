@@ -30,6 +30,7 @@ import pandas as pd
 import numpy as np
 import lightgbm as lgb
 import dask.dataframe as dd
+import dask.array as da
 from dask.distributed import Client
 from dask_cuda import LocalCUDACluster
 import xgboost as xgb
@@ -148,25 +149,23 @@ class XgbGPUHistDaskAlgorithm(XgbAlgorithm):
                                    local_directory=args.root,
                                    threads_per_worker=1)
         client = Client(cluster)
-        partition_size = 1000
+        partition_size = 10000
         if isinstance(data.X_train, np.ndarray):
-            X = dd.from_array(data.X_train, partition_size)
-            y = dd.from_array(data.y_train, partition_size)
+            X = da.from_array(data.X_train, (partition_size, data.X_train.shape[1]))
+            y = da.from_array(data.y_train, partition_size)
         else:
-            X = dd.from_pandas(data.X_train, partition_size)
-            y = dd.from_pandas(data.y_train, partition_size)
+
+            X = dd.from_pandas(data.X_train, chunksize=partition_size)
+            y = dd.from_pandas(data.y_train, chunksize=partition_size)
         dtrain = xgb.dask.DaskDMatrix(client, X, y)
         with Timer() as t:
             output = xgb.dask.train(client, params, dtrain, num_boost_round=args.ntrees)
         self.model = output['booster']
         client.close()
+        cluster.close()
         return t.interval
 
     def test(self, data):
-        if isinstance(data.X_test, np.ndarray):
-            data.X_test = pd.DataFrame(data=data.X_test, columns=np.arange(0,
-                                                                           data.X_test.shape[1]),
-                                       index=np.arange(0, data.X_test.shape[0]))
         dtest = xgb.DMatrix(data.X_test, data.y_test)
         return self.model.predict(dtest)
 
