@@ -28,15 +28,18 @@ from abc import ABC, abstractmethod
 import time
 import pandas as pd
 import numpy as np
-import lightgbm as lgb
+
 import dask.dataframe as dd
 import dask.array as da
 from dask.distributed import Client
 from dask_cuda import LocalCUDACluster
-import xgboost as xgb
-import catboost as cat
+
+from impls import xgb
+from impls import dxgb
+from impls import lgb
+from impls import cat
+
 from datasets import LearningTask
-import dask_xgboost as dxgb
 
 
 class Timer:

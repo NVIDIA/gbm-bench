@@ -43,9 +43,7 @@ def get_number_processors(args):
 
 
 def print_sys_info(args):
-    import xgboost
-    import lightgbm
-    import catboost
+    from impls import xgboost, lightgbm, catboost
     print("System  : %s" % sys.version)
     print("Xgboost : %s" % xgboost.__version__)
     print("LightGBM: %s" % lightgbm.__version__)
@@ -56,34 +54,58 @@ def print_sys_info(args):
 def parse_args():
     parser = argparse.ArgumentParser(
         description="Benchmark xgboost/lightgbm/catboost on real datasets")
-    parser.add_argument("-dataset", default="all", type=str,
-                        help="The dataset to be used for benchmarking. 'all' for all datasets.")
-    parser.add_argument("-root", default="/opt/gbm-datasets",
-                        type=str, help="The root datasets folder")
-    parser.add_argument("-algorithm", default="all", type=str,
+    parser.add_argument(
+        "-dataset",
+        default="all",
+        type=str,
+        help="The dataset to be used for benchmarking. 'all' for all datasets."
+    )
+    parser.add_argument("-root",
+                        default="/opt/gbm-datasets",
+                        type=str,
+                        help="The root datasets folder")
+    parser.add_argument("-algorithm",
+                        default="all",
+                        type=str,
                         help=("Comma-separated list of algorithms to run; "
                               "'all' run all"))
-    parser.add_argument("-gpus", default=-1, type=int,
-                        help=("#GPUs to use for the benchmarks; "
-                              "ignored when not supported. Default is to use all."))
-    parser.add_argument("-cpus", default=0, type=int,
+    parser.add_argument(
+        "-gpus",
+        default=-1,
+        type=int,
+        help=("#GPUs to use for the benchmarks; "
+              "ignored when not supported. Default is to use all."))
+    parser.add_argument("-cpus",
+                        default=0,
+                        type=int,
                         help=("#CPUs to use for the benchmarks; "
                               "0 means psutil.cpu_count(logical=False)"))
-    parser.add_argument("-output", default=None, type=str,
+    parser.add_argument("-output",
+                        default=None,
+                        type=str,
                         help="Output json file with runtime/accuracy stats")
-    parser.add_argument("-ntrees", default=500, type=int,
+    parser.add_argument("-ntrees",
+                        default=500,
+                        type=int,
                         help=("Number of trees. Default is as specified in "
                               "the respective dataset configuration"))
-    parser.add_argument("-nrows", default=None, type=int,
-                        help=(
-                            "Subset of rows in the datasets to use. Useful for test running "
-                            "benchmarks on small amounts of data. WARNING: Some datasets will "
-                            "give incorrect accuracy results if nrows is specified as they have "
-                            "predefined train/test splits."))
-    parser.add_argument("-warmup", action="store_true",
-                        help=("Whether to run a small benchmark (fraud) as a warmup"))
-    parser.add_argument("-verbose", action="store_true", help="Produce verbose output")
-    parser.add_argument("-extra", default='{}', help="Extra arguments as a python dictionary")
+    parser.add_argument(
+        "-nrows",
+        default=None,
+        type=int,
+        help='''Subset of rows in the datasets to use. Useful for test running benchmarks on
+small amounts of data. WARNING: Some datasets will give incorrect accuracy
+results if nrows is specified as they have predefined train/test splits.  ''')
+    parser.add_argument(
+        "-warmup",
+        action="store_true",
+        help=("Whether to run a small benchmark (fraud) as a warmup"))
+    parser.add_argument("-verbose",
+                        action="store_true",
+                        help="Produce verbose output")
+    parser.add_argument("-extra",
+                        default='{}',
+                        help="Extra arguments as a python dictionary")
     args = parser.parse_args()
     # default value for output json file
     if not args.output:
