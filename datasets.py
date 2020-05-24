@@ -23,7 +23,6 @@
 # Copyright (c) 2018, NVIDIA CORPORATION. All rights reserved.
 
 import os
-import sys
 from enum import Enum
 import pickle
 import numpy as np
@@ -32,10 +31,7 @@ from sklearn.datasets import load_svmlight_file
 
 import pandas as pd
 
-if sys.version_info[0] >= 3:
-    from urllib.request import urlretrieve  # pylint: disable=import-error,no-name-in-module
-else:
-    from urllib import urlretrieve  # pylint: disable=import-error,no-name-in-module
+from urllib.request import urlretrieve
 
 
 class LearningTask(Enum):

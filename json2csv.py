@@ -31,7 +31,8 @@ import os
 import csv
 
 TIMINGS = ["train_time", "test_time"]
-METRICS = ["AUC", "Accuracy", "F1", "Precision", "Recall"]
+METRICS = ["AUC", "Accuracy", "F1", "Precision", "Recall", "MeanAbsError", "MeanSquaredError",
+           "MedianAbsError"]
 ALLMETRICS = TIMINGS + METRICS
 
 
@@ -87,15 +88,15 @@ def combine_perf_data(data, datasets, algos):
 
 def write_csv(all_data, datasets):
     writer = csv.writer(sys.stdout)
+    header = ['dataset', 'algorithm'] + ALLMETRICS
+    writer.writerow(header)
     for dataset in sorted(datasets):
-        header = [dataset] + ALLMETRICS
-        writer.writerow(header)
         for row in all_data[dataset]:
-            writer.writerow(row)
+            writer.writerow([dataset] + row)
 
 
 def main():
-    data = load_all_perf_data(sys.argv[1:])
+    data = load_perf_data(sys.argv[1])
     datasets = get_all_datasets(data)
     algos = get_all_algos(data)
     table = combine_perf_data(data, datasets, algos)
