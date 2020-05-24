@@ -43,17 +43,20 @@ def get_number_processors(args):
 
 
 def print_sys_info(args):
-    import xgboost
-    print("Xgboost : %s" % xgboost.__version__)
     try:
-        import lightgbm
-        print("LightGBM: %s" % lightgbm.__version__)
-    except:
+        import xgboost  # pylint: disable=import-outside-toplevel
+        print("Xgboost : %s" % xgboost.__version__)
+    except ImportError:
         pass
     try:
-        import catboost
+        import lightgbm  # pylint: disable=import-outside-toplevel
         print("LightGBM: %s" % lightgbm.__version__)
-    except:
+    except ImportError:
+        pass
+    try:
+        import catboost  # pylint: disable=import-outside-toplevel
+        print("Catboost: %s" % catboost.__version__)
+    except ImportError:
         pass
     print("System  : %s" % sys.version)
     print("#jobs   : %d" % args.cpus)

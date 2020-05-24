@@ -36,15 +36,15 @@ import xgboost as xgb
 
 try:
     import catboost as cat
-except:
+except ImportError:
     cat = None
 try:
     import lightgbm as lgb
-except:
+except ImportError:
     lgb = None
 try:
     import dask_xgboost as dxgb
-except:
+except ImportError:
     dxgb = None
 from datasets import LearningTask
 

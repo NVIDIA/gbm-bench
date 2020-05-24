@@ -25,13 +25,11 @@
 import os
 from enum import Enum
 import pickle
+from urllib.request import urlretrieve
 import numpy as np
 from sklearn.model_selection import train_test_split
-from sklearn.datasets import load_svmlight_file
-
+from sklearn.datasets import load_svmlight_file, fetch_covtype
 import pandas as pd
-
-from urllib.request import urlretrieve
 
 
 class LearningTask(Enum):
@@ -256,7 +254,6 @@ def prepare_epsilon(dataset_folder, nrows):
 
 
 def prepare_covtype(dataset_folder, nrows):  # pylint: disable=unused-argument
-    from sklearn.datasets import fetch_covtype
     X, y = fetch_covtype(return_X_y=True)  # pylint: disable=unexpected-keyword-arg
     if nrows is not None:
         X = X[0:nrows]
