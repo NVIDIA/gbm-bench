@@ -40,7 +40,7 @@ except ImportError:
     cat = None
 try:
     import lightgbm as lgb
-except ImportError:
+except (ImportError, OSError):
     lgb = None
 try:
     import dask_xgboost as dxgb
@@ -151,7 +151,7 @@ class XgbGPUHistDaskAlgorithm(XgbAlgorithm):
     def configure(self, data, args):
         params = super(XgbGPUHistDaskAlgorithm, self).configure(data, args)
         params.update({"tree_method": "gpu_hist"})
-        del params['nthread'] # This is handled by dask
+        del params['nthread']  # This is handled by dask
         return params
 
     def fit(self, data, args):
@@ -160,7 +160,7 @@ class XgbGPUHistDaskAlgorithm(XgbAlgorithm):
         cluster = LocalCUDACluster(n_workers=n_workers,
                                    local_directory=args.root)
         client = Client(cluster)
-        partition_size = 100
+        partition_size = max(len(data.y_train) // 1000,1)
         if isinstance(data.X_train, np.ndarray):
             X = da.from_array(data.X_train, (partition_size, data.X_train.shape[1]))
             y = da.from_array(data.y_train, partition_size)

@@ -51,7 +51,7 @@ def print_sys_info(args):
     try:
         import lightgbm  # pylint: disable=import-outside-toplevel
         print("LightGBM: %s" % lightgbm.__version__)
-    except ImportError:
+    except (ImportError, OSError):
         pass
     try:
         import catboost  # pylint: disable=import-outside-toplevel
