@@ -160,7 +160,7 @@ class XgbGPUHistDaskAlgorithm(XgbAlgorithm):
         cluster = LocalCUDACluster(n_workers=n_workers,
                                    local_directory=args.root)
         client = Client(cluster)
-        partition_size = max(len(data.y_train) // 1000,1)
+        partition_size = max(len(data.y_train) // 1000, 1)
         if isinstance(data.X_train, np.ndarray):
             X = da.from_array(data.X_train, (partition_size, data.X_train.shape[1]))
             y = da.from_array(data.y_train, partition_size)
@@ -179,6 +179,7 @@ class XgbGPUHistDaskAlgorithm(XgbAlgorithm):
 
     def test(self, data):
         dtest = xgb.DMatrix(data.X_test, data.y_test)
+        self.model.set_param({'predictor': 'gpu_predictor'})
         return self.model.predict(dtest)
 
     def __exit__(self, exc_type, exc_value, traceback):
