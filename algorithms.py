@@ -154,21 +154,28 @@ class XgbGPUHistDaskAlgorithm(XgbAlgorithm):
         del params['nthread']  # This is handled by dask
         return params
 
+    def get_slices(self, n_slices, X, y):
+        n_rows_worker = int(np.ceil(len(y) / n_slices))
+        indices = []
+        count = 0
+        for _ in range(0, n_slices - 1):
+            indices.append(min(count + n_rows_worker, len(y)))
+            count += n_rows_worker
+        return np.split(X, indices), np.split(y, indices)
+
     def fit(self, data, args):
         params = self.configure(data, args)
         n_workers = None if args.gpus < 0 else args.gpus
         cluster = LocalCUDACluster(n_workers=n_workers,
                                    local_directory=args.root)
         client = Client(cluster)
-        partition_size = max(len(data.y_train) // 1000, 1)
-        if isinstance(data.X_train, np.ndarray):
-            X = da.from_array(data.X_train, (partition_size, data.X_train.shape[1]))
-            y = da.from_array(data.y_train, partition_size)
-        else:
-
-            X = dd.from_pandas(data.X_train, chunksize=partition_size)
-            y = dd.from_pandas(data.y_train, chunksize=partition_size)
-        client.rebalance()
+        n_partitions = len(client.scheduler_info()['workers'])
+        X_sliced, y_sliced = self.get_slices(n_partitions,
+                                             data.X_train, data.y_train)
+        X = da.concatenate([da.from_array(sub_array) for sub_array in X_sliced])
+        X = X.rechunk((X_sliced[0].shape[0], data.X_train.shape[1]))
+        y = da.concatenate([da.from_array(sub_array) for sub_array in y_sliced])
+        y = y.rechunk(X.chunksize[0])
         dtrain = xgb.dask.DaskDMatrix(client, X, y)
         with Timer() as t:
             output = xgb.dask.train(client, params, dtrain, num_boost_round=args.ntrees)

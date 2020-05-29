@@ -46,7 +46,7 @@ def get_metrics(data, pred):
 def evaluate_metrics(y_true, y_pred, metrics):
     res = {}
     for metric_name, metric in metrics.items():
-        res[metric_name] = metric(y_true, y_pred)
+        res[metric_name] = float(metric(y_true, y_pred))
     return res
 
 
