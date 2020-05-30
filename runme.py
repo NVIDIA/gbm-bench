@@ -43,13 +43,22 @@ def get_number_processors(args):
 
 
 def print_sys_info(args):
-    import xgboost
-    import lightgbm
-    import catboost
+    try:
+        import xgboost  # pylint: disable=import-outside-toplevel
+        print("Xgboost : %s" % xgboost.__version__)
+    except ImportError:
+        pass
+    try:
+        import lightgbm  # pylint: disable=import-outside-toplevel
+        print("LightGBM: %s" % lightgbm.__version__)
+    except (ImportError, OSError):
+        pass
+    try:
+        import catboost  # pylint: disable=import-outside-toplevel
+        print("Catboost: %s" % catboost.__version__)
+    except ImportError:
+        pass
     print("System  : %s" % sys.version)
-    print("Xgboost : %s" % xgboost.__version__)
-    print("LightGBM: %s" % lightgbm.__version__)
-    print("CatBoost: %s" % catboost.__version__)
     print("#jobs   : %d" % args.cpus)
 
 
@@ -69,7 +78,7 @@ def parse_args():
     parser.add_argument("-cpus", default=0, type=int,
                         help=("#CPUs to use for the benchmarks; "
                               "0 means psutil.cpu_count(logical=False)"))
-    parser.add_argument("-output", default=None, type=str,
+    parser.add_argument("-output", default=sys.path[0] + "/results.json", type=str,
                         help="Output json file with runtime/accuracy stats")
     parser.add_argument("-ntrees", default=500, type=int,
                         help=("Number of trees. Default is as specified in "

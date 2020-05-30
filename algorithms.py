@@ -28,15 +28,25 @@ from abc import ABC, abstractmethod
 import time
 import pandas as pd
 import numpy as np
-import lightgbm as lgb
 import dask.dataframe as dd
 import dask.array as da
 from dask.distributed import Client
 from dask_cuda import LocalCUDACluster
 import xgboost as xgb
-import catboost as cat
+
+try:
+    import catboost as cat
+except ImportError:
+    cat = None
+try:
+    import lightgbm as lgb
+except (ImportError, OSError):
+    lgb = None
+try:
+    import dask_xgboost as dxgb
+except ImportError:
+    dxgb = None
 from datasets import LearningTask
-import dask_xgboost as dxgb
 
 
 class Timer:
@@ -141,22 +151,31 @@ class XgbGPUHistDaskAlgorithm(XgbAlgorithm):
     def configure(self, data, args):
         params = super(XgbGPUHistDaskAlgorithm, self).configure(data, args)
         params.update({"tree_method": "gpu_hist"})
+        del params['nthread']  # This is handled by dask
         return params
+
+    def get_slices(self, n_slices, X, y):
+        n_rows_worker = int(np.ceil(len(y) / n_slices))
+        indices = []
+        count = 0
+        for _ in range(0, n_slices - 1):
+            indices.append(min(count + n_rows_worker, len(y)))
+            count += n_rows_worker
+        return np.split(X, indices), np.split(y, indices)
 
     def fit(self, data, args):
         params = self.configure(data, args)
-        cluster = LocalCUDACluster(n_workers=None if args.gpus < 0 else args.gpus,
-                                   local_directory=args.root,
-                                   threads_per_worker=1)
+        n_workers = None if args.gpus < 0 else args.gpus
+        cluster = LocalCUDACluster(n_workers=n_workers,
+                                   local_directory=args.root)
         client = Client(cluster)
-        partition_size = 10000
-        if isinstance(data.X_train, np.ndarray):
-            X = da.from_array(data.X_train, (partition_size, data.X_train.shape[1]))
-            y = da.from_array(data.y_train, partition_size)
-        else:
-
-            X = dd.from_pandas(data.X_train, chunksize=partition_size)
-            y = dd.from_pandas(data.y_train, chunksize=partition_size)
+        n_partitions = len(client.scheduler_info()['workers'])
+        X_sliced, y_sliced = self.get_slices(n_partitions,
+                                             data.X_train, data.y_train)
+        X = da.concatenate([da.from_array(sub_array) for sub_array in X_sliced])
+        X = X.rechunk((X_sliced[0].shape[0], data.X_train.shape[1]))
+        y = da.concatenate([da.from_array(sub_array) for sub_array in y_sliced])
+        y = y.rechunk(X.chunksize[0])
         dtrain = xgb.dask.DaskDMatrix(client, X, y)
         with Timer() as t:
             output = xgb.dask.train(client, params, dtrain, num_boost_round=args.ntrees)
@@ -167,6 +186,7 @@ class XgbGPUHistDaskAlgorithm(XgbAlgorithm):
 
     def test(self, data):
         dtest = xgb.DMatrix(data.X_test, data.y_test)
+        self.model.set_param({'predictor': 'gpu_predictor'})
         return self.model.predict(dtest)
 
     def __exit__(self, exc_type, exc_value, traceback):

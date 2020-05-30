@@ -23,19 +23,13 @@
 # Copyright (c) 2018, NVIDIA CORPORATION. All rights reserved.
 
 import os
-import sys
 from enum import Enum
 import pickle
+from urllib.request import urlretrieve
 import numpy as np
 from sklearn.model_selection import train_test_split
-from sklearn.datasets import load_svmlight_file
-
+from sklearn.datasets import load_svmlight_file, fetch_covtype
 import pandas as pd
-
-if sys.version_info[0] >= 3:
-    from urllib.request import urlretrieve  # pylint: disable=import-error,no-name-in-module
-else:
-    from urllib import urlretrieve  # pylint: disable=import-error,no-name-in-module
 
 
 class LearningTask(Enum):
@@ -102,8 +96,8 @@ def prepare_airline(dataset_folder, nrows):  # pylint: disable=too-many-locals
     # Turn into binary classification problem
     df["ArrDelayBinary"] = 1 * (df["ArrDelay"] > 0)
 
-    X = df[df.columns.difference(["ArrDelay", "ArrDelayBinary"])]
-    y = df["ArrDelayBinary"]
+    X = df[df.columns.difference(["ArrDelay", "ArrDelayBinary"])].to_numpy(dtype=np.float32)
+    y = df["ArrDelayBinary"].to_numpy(dtype=np.float32)
     del df
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=77,
                                                         test_size=0.2,
@@ -125,8 +119,9 @@ def prepare_bosch(dataset_folder, nrows):
               filename + " -p " + dataset_folder)
     X = pd.read_csv(local_url, index_col=0, compression='zip', dtype=np.float32,
                     nrows=nrows)
-    y = X.iloc[:, -1]
+    y = X.iloc[:, -1].to_numpy(dtype=np.float32)
     X.drop(X.columns[-1], axis=1, inplace=True)
+    X = X.to_numpy(dtype=np.float32)
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=77,
                                                         test_size=0.2,
                                                         )
@@ -148,8 +143,8 @@ def prepare_fraud(dataset_folder, nrows):
     os.system("kaggle datasets download mlg-ulb/creditcardfraud -f" +
               filename + " -p " + dataset_folder)
     df = pd.read_csv(local_url + ".zip", dtype=np.float32, nrows=nrows)
-    X = df[[col for col in df.columns if col.startswith('V')]]
-    y = df['Class']
+    X = df[[col for col in df.columns if col.startswith('V')]].to_numpy(dtype=np.float32)
+    y = df['Class'].to_numpy(dtype=np.float32)
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=77,
                                                         test_size=0.2,
                                                         )
@@ -170,8 +165,8 @@ def prepare_higgs(dataset_folder, nrows):
     if not os.path.isfile(local_url):
         urlretrieve(url, local_url)
     higgs = pd.read_csv(local_url, nrows=nrows)
-    X = higgs.iloc[:, 1:]
-    y = higgs.iloc[:, 0]
+    X = higgs.iloc[:, 1:].to_numpy(dtype=np.float32)
+    y = higgs.iloc[:, 0].to_numpy(dtype=np.float32)
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=77,
                                                         test_size=0.2,
                                                         )
@@ -193,8 +188,8 @@ def prepare_year(dataset_folder, nrows):
     if not os.path.isfile(local_url):
         urlretrieve(url, local_url)
     year = pd.read_csv(local_url, nrows=nrows, header=None)
-    X = year.iloc[:, 1:]
-    y = year.iloc[:, 0]
+    X = year.iloc[:, 1:].to_numpy(dtype=np.float32)
+    y = year.iloc[:, 0].to_numpy(dtype=np.float32)
 
     if nrows is None:
         # this dataset requires a specific train/test split,
@@ -260,7 +255,6 @@ def prepare_epsilon(dataset_folder, nrows):
 
 
 def prepare_covtype(dataset_folder, nrows):  # pylint: disable=unused-argument
-    from sklearn.datasets import fetch_covtype
     X, y = fetch_covtype(return_X_y=True)  # pylint: disable=unexpected-keyword-arg
     if nrows is not None:
         X = X[0:nrows]
