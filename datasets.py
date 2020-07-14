@@ -30,6 +30,26 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.datasets import load_svmlight_file, fetch_covtype
 import pandas as pd
+import tqdm
+
+pbar = None
+
+
+def show_progress(block_num, block_size, total_size):
+    global pbar
+    if pbar is None:
+        pbar = tqdm.tqdm(total=total_size / 1024, unit='kB')
+
+    downloaded = block_num * block_size
+    if downloaded < total_size:
+        pbar.update(block_size / 1024)
+    else:
+        pbar.close()
+        pbar = None
+
+
+def retrieve(url, filename=None):
+    return urlretrieve(url, filename, reporthook=show_progress)
 
 
 class LearningTask(Enum):
@@ -67,7 +87,7 @@ def prepare_airline(dataset_folder, nrows):  # pylint: disable=too-many-locals
     if os.path.exists(pickle_url):
         return pickle.load(open(pickle_url, "rb"))
     if not os.path.isfile(local_url):
-        urlretrieve(url, local_url)
+        retrieve(url, local_url)
 
     cols = [
         "Year", "Month", "DayofMonth", "DayofWeek", "CRSDepTime",
@@ -163,7 +183,7 @@ def prepare_higgs(dataset_folder, nrows):
         return pickle.load(open(pickle_url, "rb"))
 
     if not os.path.isfile(local_url):
-        urlretrieve(url, local_url)
+        retrieve(url, local_url)
     higgs = pd.read_csv(local_url, nrows=nrows)
     X = higgs.iloc[:, 1:].to_numpy(dtype=np.float32)
     y = higgs.iloc[:, 0].to_numpy(dtype=np.float32)
@@ -186,7 +206,7 @@ def prepare_year(dataset_folder, nrows):
         return pickle.load(open(pickle_url, "rb"))
 
     if not os.path.isfile(local_url):
-        urlretrieve(url, local_url)
+        retrieve(url, local_url)
     year = pd.read_csv(local_url, nrows=nrows, header=None)
     X = year.iloc[:, 1:].to_numpy(dtype=np.float32)
     y = year.iloc[:, 0].to_numpy(dtype=np.float32)
@@ -225,9 +245,9 @@ def prepare_epsilon(dataset_folder, nrows):
         return pickle.load(open(pickle_url, "rb"))
 
     if not os.path.isfile(local_url_train):
-        urlretrieve(url_train, local_url_train)
+        retrieve(url_train, local_url_train)
     if not os.path.isfile(local_url_test):
-        urlretrieve(url_test, local_url_test)
+        retrieve(url_test, local_url_test)
 
     X_train, y_train = load_svmlight_file(local_url_train,
                                           dtype=np.float32)
