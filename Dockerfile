@@ -46,7 +46,7 @@ RUN conda install \
         distributed \
         tqdm && \
         conda clean -ya && \
-        pip install kaggle dask-xgboost && \
+        pip install kaggle dask-xgboost tqdm && \
         conda install -c rapidsai-nightly dask-cuda
 
 # cmake
@@ -133,4 +133,3 @@ RUN git config --global http.sslVerify false && \
     cd ../python-package && \
     pip uninstall -y xgboost && \
     python setup.py install
-
