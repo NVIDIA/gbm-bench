@@ -46,8 +46,7 @@ RUN conda install \
         distributed \
         tqdm && \
         conda clean -ya && \
-        pip install kaggle dask-xgboost tqdm && \
-        conda install -c rapidsai dask-cuda
+        pip install kaggle dask-xgboost tqdm dask-cuda
 
 # cmake
 ENV CMAKE_SHORT_VERSION 3.18
