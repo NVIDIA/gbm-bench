@@ -18,8 +18,8 @@ RUN apt-get update && \
         wget \
         zlib1g-dev && \
     rm -rf /var/lib/apt/*
-RUN curl -o /opt/miniconda.sh \
-        -O https://repo.continuum.io/miniconda/Miniconda3-4.4.10-Linux-x86_64.sh  && \
+RUN curl -L -o /opt/miniconda.sh \
+        -O https://repo.continuum.io/miniconda/Miniconda3-py37_4.8.3-Linux-x86_64.sh  && \
     chmod +x /opt/miniconda.sh && \
     /opt/miniconda.sh -b -p /opt/conda && \
     /opt/conda/bin/conda update -n base conda && \
@@ -46,12 +46,11 @@ RUN conda install \
         distributed \
         tqdm && \
         conda clean -ya && \
-        pip install kaggle dask-xgboost tqdm && \
-        conda install -c rapidsai-nightly dask-cuda
+        pip install kaggle dask-xgboost tqdm dask-cuda
 
 # cmake
-ENV CMAKE_SHORT_VERSION 3.12
-ENV CMAKE_LONG_VERSION 3.12.3
+ENV CMAKE_SHORT_VERSION 3.18
+ENV CMAKE_LONG_VERSION 3.18.2
 RUN wget --no-check-certificate \
         "https://cmake.org/files/v${CMAKE_SHORT_VERSION}/cmake-${CMAKE_LONG_VERSION}.tar.gz" && \
     tar xf cmake-${CMAKE_LONG_VERSION}.tar.gz && \
