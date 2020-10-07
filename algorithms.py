@@ -33,7 +33,6 @@ import dask.array as da
 from dask.distributed import Client
 from dask_cuda import LocalCUDACluster
 import xgboost as xgb
-import cudf
 
 try:
     import catboost as cat
@@ -73,14 +72,6 @@ try:
     from sklearn.ensemble import RandomForestRegressor as skrf_r
 except ImportError:
     skrf_r = None
-try:
-    from cuml.ensemble import RandomForestClassifier as cumlrf
-except ImportError:
-    cumlrf = None
-try:
-    from cuml.ensemble import RandomForestRegressor as cumlrf_r
-except ImportError:
-    cumlrf_r = None
 
 from datasets import LearningTask
 
@@ -125,8 +116,6 @@ class Algorithm(ABC):
             return SkGradientAlgorithm()
         if name == 'skrf':
             return SkRandomForestAlgorithm()
-        if name == 'cuml-rf':
-            return CumlRfAlgorithm()
         raise ValueError("Unknown algorithm: " + name)
 
     def __init__(self):
