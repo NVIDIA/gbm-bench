@@ -48,8 +48,7 @@ RUN conda install -c conda-forge \
         tqdm && \
         conda clean -ya && \
         pip install kaggle tqdm && \
-        conda install -c rapidsai -c nvidia -c conda-forge -c defaults cudf=0.15.0 dask-cuda rmm librmm rapids-xgboost cuml=0.15 tmux
-#        pip install xgboost==1.2.0rc2 
+        conda install -c rapidsai -c nvidia -c conda-forge -c defaults cudf=0.15.0 dask-cuda rmm librmm rapids-xgboost cuml=0.15
 
 # cmake
 ENV CMAKE_SHORT_VERSION 3.14
@@ -138,5 +137,4 @@ RUN git config --global http.sslVerify false && \
     make -j4 && \
     cd ../python-package && \
     pip uninstall -y xgboost && \
-    pip install xgboost=1.1.1 && \
-    git log > commits.txt
+    pip install xgboost=1.1.1
