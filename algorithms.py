@@ -33,6 +33,7 @@ import dask.array as da
 from dask.distributed import Client
 from dask_cuda import LocalCUDACluster
 import xgboost as xgb
+import cudf
 
 try:
     import catboost as cat
@@ -72,6 +73,14 @@ try:
     from sklearn.ensemble import RandomForestRegressor as skrf_r
 except ImportError:
     skrf_r = None
+try:
+    from cuml.ensemble import RandomForestClassifier as cumlrf
+except ImportError:
+    cumlrf = None
+try:
+    from cuml.ensemble import RandomForestRegressor as cumlrf_r
+except ImportError:
+    cumlrf_r = None
 
 from datasets import LearningTask
 
@@ -116,6 +125,8 @@ class Algorithm(ABC):
             return SkGradientAlgorithm()
         if name == 'skrf':
             return SkRandomForestAlgorithm()
+        if name == 'cumlrf':
+            return CumlRfAlgorithm()
         raise ValueError("Unknown algorithm: " + name)
 
     def __init__(self):
@@ -141,7 +152,32 @@ class Algorithm(ABC):
 shared_params = {"max_depth": 8, "learning_rate": 0.1,
                  "reg_lambda": 1}
 
+class CumlRfAlgorithm(Algorithm):
+    def configure(self, data, args):
+        params = shared_params.copy()
+        del params["reg_lambda"]
+        del params["learning_rate"]
+        params["n_estimators"] = args.ntrees
+        params.update(args.extra)
+        return params
 
+    def fit(self, data, args):
+        params = self.configure(data, args)
+        if data.learning_task == LearningTask.REGRESSION:
+            with Timer() as t:
+                self.model = cumlrf_r(**params).fit(data.X_train, data.y_train)
+            return t.interval
+        else:
+            with Timer() as t:
+                self.model = cumlrf(**params).fit(data.X_train, data.y_train)
+            return t.interval
+
+    def test(self, data):
+        return self.model.predict(data.X_test)
+    
+    def __exit__(self, exc_type, exc_value, traceback):
+        del self.model
+        
 class XgbAlgorithm(Algorithm):
     def configure(self, data, args):
         params = shared_params.copy()
@@ -182,26 +218,21 @@ class XgbGPUHistAlgorithm(XgbAlgorithm):
 class SkRandomForestAlgorithm(Algorithm):
     def configure(self, data, args):
         params = shared_params.copy()
-        if data.learning_task == LearningTask.REGRESSION:
-            params["objective"] = "regression"
-        elif data.learning_task == LearningTask.CLASSIFICATION:
-            params["objective"] = "binary"
-            params["scale_pos_weight"] = len(data.y_train) / np.count_nonzero(data.y_train)
-        elif data.learning_task == LearningTask.MULTICLASS_CLASSIFICATION:
-            params["objective"] = "multiclass"
-            params["num_class"] = np.max(data.y_test) + 1
+        del params["reg_lambda"]
+        del params["learning_rate"]
+        params["n_estimators"] = args.ntrees
         params.update(args.extra)
         return params
 
     def fit(self, data, args):
         params = self.configure(data, args)
-        if params["objective"] == "regression":
+        if data.learning_task == LearningTask.REGRESSION:
             with Timer() as t:
-                self.model = skrf_r(max_depth=params["max_depth"]).fit(data.X_train, data.y_train)
+                self.model = skrf_r(**params).fit(data.X_train, data.y_train)
             return t.interval
         else:
             with Timer() as t:
-                self.model = skrf(max_depth=params["max_depth"]).fit(data.X_train, data.y_train)
+                self.model = skrf(**params).fit(data.X_train, data.y_train)
             return t.interval
 
     def test(self, data):
@@ -213,26 +244,21 @@ class SkRandomForestAlgorithm(Algorithm):
 class SkGradientAlgorithm(Algorithm):
     def configure(self, data, args):
         params = shared_params.copy()
-        if data.learning_task == LearningTask.REGRESSION:
-            params["objective"] = "regression"
-        elif data.learning_task == LearningTask.CLASSIFICATION:
-            params["objective"] = "binary"
-            params["scale_pos_weight"] = len(data.y_train) / np.count_nonzero(data.y_train)
-        elif data.learning_task == LearningTask.MULTICLASS_CLASSIFICATION:
-            params["objective"] = "multiclass"
-            params["num_class"] = np.max(data.y_test) + 1
+        del params["reg_lambda"]
+        del params["learning_rate"]
+        params["n_estimators"] = args.ntrees
         params.update(args.extra)
         return params
     
     def fit(self, data, args):
         params = self.configure(data, args)
-        if params["objective"] == "regression":
+        if data.learning_task == LearningTask.REGRESSION:
             with Timer() as t:
-                self.model = skgb_r(learning_rate=params["learning_rate"], max_depth=params["max_depth"]).fit(data.X_train, data.y_train)
+                self.model = skgb_r(**params).fit(data.X_train, data.y_train)
             return t.interval
         else:
             with Timer() as t:
-                self.model = skgb(learning_rate=params["learning_rate"], max_depth=params["max_depth"]).fit(data.X_train, data.y_train)
+                self.model = skgb(**params).fit(data.X_train, data.y_train)
             return t.interval
     
     def test(self, data):
@@ -244,26 +270,21 @@ class SkGradientAlgorithm(Algorithm):
 class SkHistAlgorithm(Algorithm):
     def configure(self, data, args):
         params = shared_params.copy()
-        if data.learning_task == LearningTask.REGRESSION:
-            params["objective"] = "regression"
-        elif data.learning_task == LearningTask.CLASSIFICATION:
-            params["objective"] = "binary"
-            params["scale_pos_weight"] = len(data.y_train) / np.count_nonzero(data.y_train)
-        elif data.learning_task == LearningTask.MULTICLASS_CLASSIFICATION:
-            params["objective"] = "multiclass"
-            params["num_class"] = np.max(data.y_test) + 1
+        del params["reg_lambda"]
+        del params["learning_rate"]
+        params["n_estimators"] = args.ntrees
         params.update(args.extra)
         return params
     
     def fit(self, data, args):
         params = self.configure(data, args)
-        if params["objective"] == "regression":
+        if data.learning_task == LearningTask.REGRESSION:
             with Timer() as t:
-                self.model = skhgb_r(learning_rate=params["learning_rate"], max_depth=params["max_depth"]).fit(data.X_train, data.y_train)
+                self.model = skhgb_r(**params).fit(data.X_train, data.y_train)
             return t.interval
         else:
             with Timer() as t:
-                self.model = skhgb(learning_rate=params["learning_rate"], max_depth=params["max_depth"]).fit(data.X_train, data.y_train)
+                self.model = skhgb(**params).fit(data.X_train, data.y_train)
             return t.interval
 
     def test(self, data):
