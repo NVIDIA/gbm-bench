@@ -137,4 +137,4 @@ RUN git config --global http.sslVerify false && \
     make -j4 && \
     cd ../python-package && \
     pip uninstall -y xgboost && \
-    pip install xgboost=1.1.1
+    python setup.py install
