@@ -134,6 +134,6 @@ RUN git config --global http.sslVerify false && \
         -DUSE_NCCL=ON \
         -DPLUGIN_RMM=ON && \
     make -j4 && \
-    cd ../python-package
+    cd ../python-package && \
     pip uninstall -y xgboost && \
     python setup.py install
