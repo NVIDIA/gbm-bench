@@ -33,6 +33,7 @@ import dask.array as da
 from dask.distributed import Client
 from dask_cuda import LocalCUDACluster
 import xgboost as xgb
+import cudf
 
 try:
     import catboost as cat
@@ -46,6 +47,41 @@ try:
     import dask_xgboost as dxgb
 except ImportError:
     dxgb = None
+try:
+    from sklearn.experimental import enable_hist_gradient_boosting
+    from sklearn.ensemble import HistGradientBoostingClassifier as skhgb
+except ImportError:
+    skhgb = None
+try:
+    from sklearn.experimental import enable_hist_gradient_boosting
+    from sklearn.ensemble import HistGradientBoostingRegressor as skhgb_r
+except ImportError:
+    skhgb_r = None
+try: 
+    from sklearn.ensemble import GradientBoostingClassifier as skgb
+except ImportError:
+    skgb = None
+try: 
+    from sklearn.ensemble import GradientBoostingRegressor as skgb_r
+except ImportError:
+    skgb_r = None
+try:
+    from sklearn.ensemble import RandomForestClassifier as skrf
+except ImportError:
+    skrf = None
+try:
+    from sklearn.ensemble import RandomForestRegressor as skrf_r
+except ImportError:
+    skrf_r = None
+try:
+    from cuml.ensemble import RandomForestClassifier as cumlrf
+except ImportError:
+    cumlrf = None
+try:
+    from cuml.ensemble import RandomForestRegressor as cumlrf_r
+except ImportError:
+    cumlrf_r = None
+
 from datasets import LearningTask
 
 
@@ -83,6 +119,14 @@ class Algorithm(ABC):
             return CatCPUAlgorithm()
         if name == 'cat-gpu':
             return CatGPUAlgorithm()
+        if name == 'skhgb':
+            return SkHistAlgorithm()
+        if name == 'skgb':
+            return SkGradientAlgorithm()
+        if name == 'skrf':
+            return SkRandomForestAlgorithm()
+        if name == 'cumlrf':
+            return CumlRfAlgorithm()
         raise ValueError("Unknown algorithm: " + name)
 
     def __init__(self):
@@ -108,7 +152,32 @@ class Algorithm(ABC):
 shared_params = {"max_depth": 8, "learning_rate": 0.1,
                  "reg_lambda": 1}
 
+class CumlRfAlgorithm(Algorithm):
+    def configure(self, data, args):
+        params = shared_params.copy()
+        del params["reg_lambda"]
+        del params["learning_rate"]
+        params["n_estimators"] = args.ntrees
+        params.update(args.extra)
+        return params
 
+    def fit(self, data, args):
+        params = self.configure(data, args)
+        if data.learning_task == LearningTask.REGRESSION:
+            with Timer() as t:
+                self.model = cumlrf_r(**params).fit(data.X_train, data.y_train)
+            return t.interval
+        else:
+            with Timer() as t:
+                self.model = cumlrf(**params).fit(data.X_train, data.y_train)
+            return t.interval
+
+    def test(self, data):
+        return self.model.predict(data.X_test)
+    
+    def __exit__(self, exc_type, exc_value, traceback):
+        del self.model
+        
 class XgbAlgorithm(Algorithm):
     def configure(self, data, args):
         params = shared_params.copy()
@@ -145,7 +214,85 @@ class XgbGPUHistAlgorithm(XgbAlgorithm):
         params = super(XgbGPUHistAlgorithm, self).configure(data, args)
         params.update({"tree_method": "gpu_hist", "gpu_id": 0})
         return params
+        
+class SkRandomForestAlgorithm(Algorithm):
+    def configure(self, data, args):
+        params = shared_params.copy()
+        del params["reg_lambda"]
+        del params["learning_rate"]
+        params["n_estimators"] = args.ntrees
+        params.update(args.extra)
+        return params
 
+    def fit(self, data, args):
+        params = self.configure(data, args)
+        if data.learning_task == LearningTask.REGRESSION:
+            with Timer() as t:
+                self.model = skrf_r(**params).fit(data.X_train, data.y_train)
+            return t.interval
+        else:
+            with Timer() as t:
+                self.model = skrf(**params).fit(data.X_train, data.y_train)
+            return t.interval
+
+    def test(self, data):
+        return self.model.predict(data.X_test)
+    
+    def __exit__(self, exc_type, exc_value, traceback):
+        del self.model
+
+class SkGradientAlgorithm(Algorithm):
+    def configure(self, data, args):
+        params = shared_params.copy()
+        del params["reg_lambda"]
+        del params["learning_rate"]
+        params["n_estimators"] = args.ntrees
+        params.update(args.extra)
+        return params
+    
+    def fit(self, data, args):
+        params = self.configure(data, args)
+        if data.learning_task == LearningTask.REGRESSION:
+            with Timer() as t:
+                self.model = skgb_r(**params).fit(data.X_train, data.y_train)
+            return t.interval
+        else:
+            with Timer() as t:
+                self.model = skgb(**params).fit(data.X_train, data.y_train)
+            return t.interval
+    
+    def test(self, data):
+        return self.model.predict(data.X_test)
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        del self.model
+
+class SkHistAlgorithm(Algorithm):
+    def configure(self, data, args):
+        params = shared_params.copy()
+        del params["reg_lambda"]
+        del params["learning_rate"]
+        params["n_estimators"] = args.ntrees
+        params.update(args.extra)
+        return params
+    
+    def fit(self, data, args):
+        params = self.configure(data, args)
+        if data.learning_task == LearningTask.REGRESSION:
+            with Timer() as t:
+                self.model = skhgb_r(**params).fit(data.X_train, data.y_train)
+            return t.interval
+        else:
+            with Timer() as t:
+                self.model = skhgb(**params).fit(data.X_train, data.y_train)
+            return t.interval
+
+    def test(self, data):
+        return self.model.predict(data.X_test)
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        del self.model
+    
 
 class XgbGPUHistDaskAlgorithm(XgbAlgorithm):
     def configure(self, data, args):
