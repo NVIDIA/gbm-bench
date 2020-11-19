@@ -1,5 +1,7 @@
 ARG CUDA_VERSION
-FROM nvidia/cuda:$CUDA_VERSION-devel-ubuntu16.04
+ARG XGB_HASH=6d293020fbfa2c67b532d550fe5d55689662caac
+FROM nvidia/cuda:$CUDA_VERSION-devel-ubuntu18.04
+ARG CUDA_VERSION
 SHELL ["/bin/bash", "-c"]
 # Install conda (and use python 3.7)
 RUN apt-get update && \
@@ -16,7 +18,7 @@ RUN apt-get update && \
         tar \
         unzip \
         wget \
-        zlib1g-dev && \
+        zlib1g-dev && \ 
     rm -rf /var/lib/apt/*
 
 RUN curl -o /opt/miniconda.sh \
@@ -26,6 +28,7 @@ RUN curl -o /opt/miniconda.sh \
     /opt/conda/bin/conda update -n base conda && \
     rm /opt/miniconda.sh
 ENV PATH /opt/conda/bin:$PATH
+
 RUN conda install -c conda-forge \
         bokeh \
         h5py \
@@ -48,7 +51,7 @@ RUN conda install -c conda-forge \
         tqdm && \
         conda clean -ya && \
         pip install kaggle tqdm && \
-        conda install -c rapidsai -c nvidia -c conda-forge -c defaults cudf=0.15.0 dask-cuda rmm librmm rapids-xgboost cuml=0.15
+        conda install -c rapidsai -c nvidia -c conda-forge -c defaults cudf=0.16 dask-cuda rmm librmm cuml=0.16
 
 # cmake
 ENV CMAKE_SHORT_VERSION 3.14
@@ -95,6 +98,7 @@ ENV OPENCL_INCLUDE_DIR /usr/local/cuda/include
 RUN git config --global http.sslVerify false && \
     git clone --recursive https://github.com/Microsoft/LightGBM /opt/LightGBM && \
     cd /opt/LightGBM && \
+    git log > lgbm_log.txt && \
     mkdir build && \
     cd build && \
     cmake .. \
@@ -107,26 +111,14 @@ RUN git config --global http.sslVerify false && \
     python setup.py install --precompile
 
 # catboost
-RUN if ["$CUDA_VERSION" < "11.0"]; then git config --global http.sslVerify false && \
-    git clone --recursive "https://github.com/catboost/catboost" /opt/catboost && \
-    cd /opt/catboost && \
-    cd catboost/python-package/catboost && \
-    ../../../ya make \
-        -r \
-        -o ../../.. \
-        -DUSE_ARCADIA_PYTHON=no \
-        -DUSE_SYSTEM_PYTHON=3.7\
-        -DPYTHON_CONFIG=python3-config \
-        -DCUDA_ROOT=$(dirname $(dirname $(which nvcc))); \
-        fi
-ENV if ["$CUDA_VERSION" < "11.0"]; then PYTHONPATH=$PYTHONPATH:/opt/catboost/catboost/python-package; fi\
-
-
+RUN pip install catboost
 
 # xgboost
 RUN git config --global http.sslVerify false && \
     git clone --recursive https://github.com/dmlc/xgboost /opt/xgboost && \
     cd /opt/xgboost && \
+    git checkout $XGB_HASH && \
+    git submodule update --init --recursive && \
     mkdir build && \
     cd build && \
     RMM_ROOT=/opt/conda cmake .. \
@@ -134,6 +126,8 @@ RUN git config --global http.sslVerify false && \
         -DUSE_NCCL=ON \
         -DPLUGIN_RMM=ON && \
     make -j4 && \
+    git log > xgb_log.txt && \
     cd ../python-package && \
     pip uninstall -y xgboost && \
     python setup.py install
+ ENV XGBOOST_HASH=${XGB_HASH}
