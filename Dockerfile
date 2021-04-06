@@ -26,8 +26,9 @@ RUN curl -o /opt/miniconda.sh \
     /opt/conda/bin/conda update -n base conda && \
     rm /opt/miniconda.sh
 ENV PATH /opt/conda/bin:$PATH
-RUN conda install -c conda-forge \
+RUN conda install -c conda-forge -c rapidsai -c nvidia -c defaults \
         bokeh \
+        cmake>=3.14 \
         h5py \
         ipython \
         ipywidgets \
@@ -46,29 +47,14 @@ RUN conda install -c conda-forge \
         six \
         dask \
         distributed \
-        tqdm && \
-        conda clean -ya && \
-        conda install -c rapidsai -c nvidia -c conda-forge -c defaults \
-            cudf=0.18.0 \
-            dask-cuda \
-            rmm \
-            librmm \
-            rapids-xgboost \
-            cuml=0.18 && \
-        conda clean -ya
-
-# cmake
-ENV CMAKE_SHORT_VERSION 3.14
-ENV CMAKE_LONG_VERSION 3.14.7
-RUN wget --no-check-certificate \
-        "https://cmake.org/files/v${CMAKE_SHORT_VERSION}/cmake-${CMAKE_LONG_VERSION}.tar.gz" && \
-    tar xf cmake-${CMAKE_LONG_VERSION}.tar.gz && \
-    cd cmake-${CMAKE_LONG_VERSION} && \
-    ./bootstrap --system-curl && \
-    make -j && \
-    make install && \
-    cd .. && \
-    rm -rf cmake-${CMAKE_LONG_VERSION}.tar.gz cmake-${CMAKE_LONG_VERSION}
+        tqdm \
+        cudf=0.18.0 \
+        dask-cuda \
+        rmm \
+        librmm \
+        rapids-xgboost \
+        cuml=0.18 && \
+    conda clean -ya
 
 # lightgbm
 ENV LANG=C.UTF-8 LC_ALL=C.UTF-8
