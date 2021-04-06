@@ -100,7 +100,7 @@ RUN git config --global http.sslVerify false && \
     python setup.py install --precompile
 
 # catboost
-RUN if ["$CUDA_VERSION" < "11.0"]; then git config --global http.sslVerify false && \
+RUN if [ "`echo $CUDA_VERSION | sed -e 's/[.].*//'`" -lt "11" ]; then git config --global http.sslVerify false && \
     git clone --recursive "https://github.com/catboost/catboost" /opt/catboost && \
     cd /opt/catboost && \
     cd catboost/python-package/catboost && \
@@ -112,7 +112,7 @@ RUN if ["$CUDA_VERSION" < "11.0"]; then git config --global http.sslVerify false
         -DPYTHON_CONFIG=python3-config \
         -DCUDA_ROOT=$(dirname $(dirname $(which nvcc))); \
         fi
-ENV if ["$CUDA_VERSION" < "11.0"]; then PYTHONPATH=$PYTHONPATH:/opt/catboost/catboost/python-package; fi
+ENV if [ "`echo $CUDA_VERSION | sed -e 's/[.].*//'`" -lt "11" ]; then PYTHONPATH=$PYTHONPATH:/opt/catboost/catboost/python-package; fi
 
 
 
