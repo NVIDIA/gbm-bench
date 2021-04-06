@@ -1,5 +1,5 @@
 ARG CUDA_VERSION
-FROM nvidia/cuda:$CUDA_VERSION-devel-ubuntu16.04
+FROM nvidia/cuda:$CUDA_VERSION-devel-ubuntu18.04
 SHELL ["/bin/bash", "-c"]
 # Install conda (and use python 3.7)
 RUN apt-get update && \
