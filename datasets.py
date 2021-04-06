@@ -78,11 +78,14 @@ def prepare_dataset(dataset_folder, dataset, nrows):
     return prepare_function(dataset_folder, nrows)
 
 
-def prepare_airline(dataset_folder, nrows):  # pylint: disable=too-many-locals
+def __prepare_airline(dataset_folder, nrows, regression=False):  # pylint: disable=too-many-locals
     url = 'http://kt.ijs.si/elena_ikonomovska/datasets/airline/airline_14col.data.bz2'
+    pkl_base_name = "airline"
+    if regression:
+        pkl_base_name += "-regression"
     local_url = os.path.join(dataset_folder, os.path.basename(url))
     pickle_url = os.path.join(dataset_folder,
-                              "airline"
+                              pkl_base_name
                               + ("" if nrows is None else "-" + str(nrows)) + ".pkl")
     if os.path.exists(pickle_url):
         return pickle.load(open(pickle_url, "rb"))
@@ -114,17 +117,30 @@ def prepare_airline(dataset_folder, nrows):  # pylint: disable=too-many-locals
         df[col] = df[col].astype("category").cat.codes
 
     # Turn into binary classification problem
-    df["ArrDelayBinary"] = 1 * (df["ArrDelay"] > 0)
+    if not regression:
+        df["ArrDelay"] = 1 * (df["ArrDelay"] > 0)
 
-    X = df[df.columns.difference(["ArrDelay", "ArrDelayBinary"])].to_numpy(dtype=np.float32)
-    y = df["ArrDelayBinary"].to_numpy(dtype=np.float32)
+    X = df[df.columns.difference(["ArrDelay"])].to_numpy(dtype=np.float32)
+    y = df["ArrDelay"].to_numpy(dtype=np.float32)
     del df
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=77,
                                                         test_size=0.2,
                                                         )
-    data = Data(X_train, X_test, y_train, y_test, LearningTask.CLASSIFICATION)
+    if regression:
+        task = LearningTask.REGRESSION
+    else:
+        task = LearningTask.CLASSIFICATION
+    data = Data(X_train, X_test, y_train, y_test, task)
     pickle.dump(data, open(pickle_url, "wb"), protocol=4)
     return data
+
+
+def prepare_airline(dataset_folder, nrows):
+    return __prepare_airline(dataset_folder, nrows, False)
+
+
+def prepare_airline_regression(dataset_folder, nrows):
+    return __prepare_airline(dataset_folder, nrows, True)
 
 
 def prepare_bosch(dataset_folder, nrows):
