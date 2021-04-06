@@ -126,7 +126,7 @@ RUN if ["$CUDA_VERSION" < "11.0"]; then git config --global http.sslVerify false
         -DPYTHON_CONFIG=python3-config \
         -DCUDA_ROOT=$(dirname $(dirname $(which nvcc))); \
         fi
-ENV if ["$CUDA_VERSION" < "11.0"]; then PYTHONPATH=$PYTHONPATH:/opt/catboost/catboost/python-package; fi\
+ENV if ["$CUDA_VERSION" < "11.0"]; then PYTHONPATH=$PYTHONPATH:/opt/catboost/catboost/python-package; fi
 
 
 
