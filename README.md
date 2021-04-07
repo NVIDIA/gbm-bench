@@ -34,6 +34,7 @@ Upon launching docker you will pass this folder as well as the location of the k
 | Name                                                                           | Rows   | Columns | Task           |
 |--------------------------------------------------------------------------------|--------|---------|----------------|
 | [airline](http://kt.ijs.si/elena_ikonomovska/data.html)                        | 115M   | 13      | Classification |
+| [airline_regression](http://kt.ijs.si/elena_ikonomovska/data.html)             | 115M   | 13      | Regression     |
 | [bosch](https://www.kaggle.com/c/bosch-production-line-performance)            | 1.184M | 968     | Classification |
 | [fraud](https://www.kaggle.com/mlg-ulb/creditcardfraud)                        | 285K   | 28      | Classification |
 | [higgs](https://archive.ics.uci.edu/ml/datasets/HIGGS)                         | 11M    | 28      | Classification |
