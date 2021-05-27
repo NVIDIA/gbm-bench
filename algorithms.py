@@ -150,7 +150,7 @@ class Algorithm(ABC):
 
 # learning parameters shared by all algorithms, using the xgboost convention
 shared_params = {"max_depth": 8, "learning_rate": 0.1,
-                 "reg_lambda": 1}
+                 "reg_lambda": 1, "max_samples" : 0.5}
 
 class CumlRfAlgorithm(Algorithm):
     def configure(self, data, args):
@@ -222,6 +222,7 @@ class SkRandomForestAlgorithm(Algorithm):
         del params["learning_rate"]
         params["n_estimators"] = args.ntrees
         params.update(args.extra)
+        params.update({"n_jobs" : -1})
         return params
 
     def fit(self, data, args):
