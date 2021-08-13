@@ -14,19 +14,19 @@ RUN . /opt/conda/etc/profile.d/conda.sh \
     && conda activate rapids
 
 # catboost
-# RUN if [ "`echo $CUDA_VERSION | sed -e 's/[.].*//'`" -lt "11" ]; then git config --global http.sslVerify false && \
-#     git clone --recursive "https://github.com/catboost/catboost" /opt/catboost && \
-#     cd /opt/catboost && \
-#     cd catboost/python-package/catboost && \
-#     ../../../ya make \
-#         -r \
-#         -o ../../.. \
-#         -DUSE_ARCADIA_PYTHON=no \
-#         -DUSE_SYSTEM_PYTHON={PYTHON_VER}\
-#         -DPYTHON_CONFIG=python3-config \
-#         -DCUDA_ROOT=$(dirname $(dirname $(which nvcc))); \
-#         fi
-# ENV if [ "`echo $CUDA_VERSION | sed -e 's/[.].*//'`" -lt "11" ]; then PYTHONPATH=$PYTHONPATH:/opt/catboost/catboost/python-package; fi
+RUN if [ "`echo $CUDA_VERSION | sed -e 's/[.].*//'`" -lt "11" ]; then git config --global http.sslVerify false && \
+    git clone --recursive "https://github.com/catboost/catboost" /opt/catboost && \
+    cd /opt/catboost && \
+    cd catboost/python-package/catboost && \
+    ../../../ya make \
+        -r \
+        -o ../../.. \
+        -DUSE_ARCADIA_PYTHON=no \
+        -DUSE_SYSTEM_PYTHON={PYTHON_VER}\
+        -DPYTHON_CONFIG=python3-config \
+        -DCUDA_ROOT=$(dirname $(dirname $(which nvcc))); \
+        fi
+ENV if [ "`echo $CUDA_VERSION | sed -e 's/[.].*//'`" -lt "11" ]; then PYTHONPATH=$PYTHONPATH:/opt/catboost/catboost/python-package; fi
 
 # xgboost
 RUN git config --global http.sslVerify false && \
@@ -34,7 +34,7 @@ RUN git config --global http.sslVerify false && \
     cd /opt/xgboost && \
     mkdir build && \
     cd build && \
-    RMM_ROOT=/opt/conda cmake .. \
+    RMM_ROOT=/opt/conda/envs/rapids cmake .. \
         -DUSE_CUDA=ON \
         -DUSE_NCCL=ON \
         -DPLUGIN_RMM=ON && \
