@@ -33,7 +33,6 @@ import dask.array as da
 from dask.distributed import Client
 from dask_cuda import LocalCUDACluster
 import xgboost as xgb
-import cudf
 
 try:
     import catboost as cat
@@ -57,11 +56,11 @@ try:
     from sklearn.ensemble import HistGradientBoostingRegressor as skhgb_r
 except ImportError:
     skhgb_r = None
-try: 
+try:
     from sklearn.ensemble import GradientBoostingClassifier as skgb
 except ImportError:
     skgb = None
-try: 
+try:
     from sklearn.ensemble import GradientBoostingRegressor as skgb_r
 except ImportError:
     skgb_r = None
@@ -174,10 +173,10 @@ class CumlRfAlgorithm(Algorithm):
 
     def test(self, data):
         return self.model.predict(data.X_test)
-    
+
     def __exit__(self, exc_type, exc_value, traceback):
         del self.model
-        
+
 class XgbAlgorithm(Algorithm):
     def configure(self, data, args):
         params = shared_params.copy()
@@ -214,7 +213,7 @@ class XgbGPUHistAlgorithm(XgbAlgorithm):
         params = super(XgbGPUHistAlgorithm, self).configure(data, args)
         params.update({"tree_method": "gpu_hist", "gpu_id": 0})
         return params
-        
+
 class SkRandomForestAlgorithm(Algorithm):
     def configure(self, data, args):
         params = shared_params.copy()
@@ -237,7 +236,7 @@ class SkRandomForestAlgorithm(Algorithm):
 
     def test(self, data):
         return self.model.predict(data.X_test)
-    
+
     def __exit__(self, exc_type, exc_value, traceback):
         del self.model
 
@@ -249,7 +248,7 @@ class SkGradientAlgorithm(Algorithm):
         params["n_estimators"] = args.ntrees
         params.update(args.extra)
         return params
-    
+
     def fit(self, data, args):
         params = self.configure(data, args)
         if data.learning_task == LearningTask.REGRESSION:
@@ -260,7 +259,7 @@ class SkGradientAlgorithm(Algorithm):
             with Timer() as t:
                 self.model = skgb(**params).fit(data.X_train, data.y_train)
             return t.interval
-    
+
     def test(self, data):
         return self.model.predict(data.X_test)
 
@@ -275,7 +274,7 @@ class SkHistAlgorithm(Algorithm):
         params["n_estimators"] = args.ntrees
         params.update(args.extra)
         return params
-    
+
     def fit(self, data, args):
         params = self.configure(data, args)
         if data.learning_task == LearningTask.REGRESSION:
@@ -292,7 +291,7 @@ class SkHistAlgorithm(Algorithm):
 
     def __exit__(self, exc_type, exc_value, traceback):
         del self.model
-    
+
 
 class XgbGPUHistDaskAlgorithm(XgbAlgorithm):
     def configure(self, data, args):
