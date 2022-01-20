@@ -1,5 +1,5 @@
 ARG CUDA_VERSION
-FROM nvidia/cuda:$CUDA_VERSION-devel-ubuntu18.04
+FROM nvidia/cuda:$CUDA_VERSION-devel-ubuntu20.04
 SHELL ["/bin/bash", "-c"]
 # Install conda (and use python 3.7)
 RUN apt-get update && \
@@ -48,12 +48,8 @@ RUN conda install -c conda-forge -c rapidsai -c nvidia -c defaults \
         dask \
         distributed \
         tqdm \
-        cudf=0.18.0 \
-        dask-cuda \
-        rmm \
-        librmm \
-        rapids-xgboost \
-        cuml=0.18 && \
+        rapids \
+        rapids-xgboost
     conda clean -ya
 
 # lightgbm
