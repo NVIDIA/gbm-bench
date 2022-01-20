@@ -2,9 +2,9 @@ ARG CUDA_VERSION
 FROM nvidia/cuda:$CUDA_VERSION-devel-ubuntu20.04
 SHELL ["/bin/bash", "-c"]
 # Install conda (and use python 3.7)
-RUN DEBIAN_FRONTEND=noninteractive && \
-    TZ=Etc/UTC && \
-    apt-get update && \
+ARG DEBIAN_FRONTEND=noninteractive
+ENV TZ=Etc/UTC
+RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         build-essential \
         ca-certificates \
