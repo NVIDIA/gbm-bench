@@ -15,4 +15,4 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Build the Docker image
-      run: docker build . --file Dockerfile --tag gbm-bench:$(date +%Y%m%d)_$(git rev-parse HEAD)
+      run: docker build . --build-arg CUDA_VERSION=11.2 --file Dockerfile --tag gbm-bench:$(date +%Y%m%d)_$(git rev-parse HEAD)
