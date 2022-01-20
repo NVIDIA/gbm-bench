@@ -49,7 +49,7 @@ RUN conda install -c conda-forge -c rapidsai -c nvidia -c defaults \
         distributed \
         tqdm \
         rapids \
-        rapids-xgboost
+        rapids-xgboost && \
     conda clean -ya
 
 # lightgbm
