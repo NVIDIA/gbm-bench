@@ -314,6 +314,7 @@ class XgbGPUHistDaskAlgorithm(XgbAlgorithm):
         params = self.configure(data, args)
         clusterargs={
             'n_workers':int(os.environ.get("NUM_WORKERS", None if args.gpus < 0 else args.gpus)),
+            'local_directory':args.root,
             'memory_limit':os.environ.get("DEVICE_MEMORY_LIMIT", None),
             'device_memory_limit':os.getenv('DASK_DEVICE_MEMORY_LIMIT',None),
             'protocol':"ucx" if os.environ.get("CLUSTER_MODE", "TCP")=="NVLINK" else "tcp",
@@ -325,7 +326,7 @@ class XgbGPUHistDaskAlgorithm(XgbAlgorithm):
             'rmm_pool_size':os.environ.get("POOL_SIZE", "29GB")
         }
 
-        cluster = LocalCUDACluster( **clusterargs )
+        cluster = LocalCUDACluster( n_workers=clusterargs['n_workers'],  )
         client = Client(cluster)
         n_partitions = len(client.scheduler_info()['workers'])
         X_sliced, y_sliced = self.get_slices(n_partitions,
