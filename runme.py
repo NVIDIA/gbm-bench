@@ -129,7 +129,7 @@ def main():
     if args.warmup:
         benchmark(args, os.path.join(args.root, "fraud"), "fraud")
     if args.dataset == 'all':
-        args.dataset = 'airline,bosch,fraud,higgs,year,epsilon,covtype'
+        args.dataset = 'airline,bosch,fraud,higgs,year,epsilon,covtype,newsgroups'
     results = {}
     for dataset in args.dataset.split(","):
         folder = os.path.join(args.root, dataset)
