@@ -180,7 +180,7 @@ class CumlRfAlgorithm(Algorithm):
 class XgbAlgorithm(Algorithm):
     def configure(self, data, args):
         params = shared_params.copy()
-        params.update({"max_leaves": 256,
+        params.update({
                        "nthread": args.cpus})
         if data.learning_task == LearningTask.REGRESSION:
             params["objective"] = "reg:squarederror"

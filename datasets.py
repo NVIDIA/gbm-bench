@@ -28,7 +28,7 @@ import pickle
 from urllib.request import urlretrieve
 import numpy as np
 from sklearn.model_selection import train_test_split
-from sklearn.datasets import load_svmlight_file, fetch_covtype
+from sklearn import datasets
 import pandas as pd
 import tqdm
 
@@ -265,9 +265,9 @@ def prepare_epsilon(dataset_folder, nrows):
     if not os.path.isfile(local_url_test):
         retrieve(url_test, local_url_test)
 
-    X_train, y_train = load_svmlight_file(local_url_train,
+    X_train, y_train = datasets.load_svmlight_file(local_url_train,
                                           dtype=np.float32)
-    X_test, y_test = load_svmlight_file(local_url_test,
+    X_test, y_test = datasets.load_svmlight_file(local_url_test,
                                         dtype=np.float32)
     X_train = X_train.toarray()
     X_test = X_test.toarray()
@@ -291,7 +291,7 @@ def prepare_epsilon(dataset_folder, nrows):
 
 
 def prepare_covtype(dataset_folder, nrows):  # pylint: disable=unused-argument
-    X, y = fetch_covtype(return_X_y=True)  # pylint: disable=unexpected-keyword-arg
+    X, y = datasets.fetch_covtype(return_X_y=True)  # pylint: disable=unexpected-keyword-arg
     if nrows is not None:
         X = X[0:nrows]
         y = y[0:nrows]
@@ -299,4 +299,17 @@ def prepare_covtype(dataset_folder, nrows):  # pylint: disable=unused-argument
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=77,
                                                         test_size=0.2,
                                                         )
+    return Data(X_train, X_test, y_train, y_test, LearningTask.MULTICLASS_CLASSIFICATION)
+
+
+def prepare_newsgroups(dataset_folder, nrows):  # pylint: disable=unused-argument
+    X, y = datasets.fetch_20newsgroups_vectorized(subset='all',return_X_y=True)  # pylint: disable=unexpected-keyword-arg
+    if nrows is not None:
+        X = X[0:nrows]
+        y = y[0:nrows]
+
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=77,
+                                                        test_size=0.2,
+                                                        )
+
     return Data(X_train, X_test, y_train, y_test, LearningTask.MULTICLASS_CLASSIFICATION)
