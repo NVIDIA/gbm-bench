@@ -25,6 +25,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from abc import ABC, abstractmethod
+import os
 import time
 import pandas as pd
 import numpy as np
@@ -311,9 +312,21 @@ class XgbGPUHistDaskAlgorithm(XgbAlgorithm):
 
     def fit(self, data, args):
         params = self.configure(data, args)
-        n_workers = None if args.gpus < 0 else args.gpus
-        cluster = LocalCUDACluster(n_workers=n_workers,
-                                   local_directory=args.root)
+        clusterargs={
+            'n_workers':int(os.environ.get("NUM_WORKERS", None if args.gpus < 0 else args.gpus)),
+            'local_directory':args.root,
+            'memory_limit':os.environ.get("DEVICE_MEMORY_LIMIT", None),
+            'device_memory_limit':os.getenv('DASK_DEVICE_MEMORY_LIMIT',None),
+            'protocol':"ucx" if os.environ.get("CLUSTER_MODE", "TCP")=="NVLINK" else "tcp",
+            'enable_tcp_over_ucx':os.environ.get("CLUSTER_MODE", "TCP")=="NVLINK",
+            'enable_nvlink':os.environ.get("CLUSTER_MODE", "TCP")=="NVLINK",
+            'enable_infiniband':os.getenv('CLUSTER_CONFIG_TYPE', "").endswith("ib"),
+            'enable_rdmacm':bool(os.getenv('ENABLE_RDMACM', False)),
+            'jit_unspill':True,
+            'rmm_pool_size':os.environ.get("POOL_SIZE", "29GB")
+        }
+
+        cluster = LocalCUDACluster( n_workers=clusterargs['n_workers'],  )
         client = Client(cluster)
         n_partitions = len(client.scheduler_info()['workers'])
         X_sliced, y_sliced = self.get_slices(n_partitions,

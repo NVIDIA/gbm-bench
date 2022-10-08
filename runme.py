@@ -31,6 +31,7 @@ import argparse
 import json
 import ast
 import psutil
+import datetime
 import algorithms
 from metrics import get_metrics
 from datasets import prepare_dataset
@@ -126,6 +127,7 @@ def main():
     args.cpus = get_number_processors(args)
     args.extra = ast.literal_eval(args.extra)
     print_sys_info(args)
+    ts=datetime.datetime.utcnow().strftime('%Y%m%d.%H%M%S%f')
     if args.warmup:
         benchmark(args, os.path.join(args.root, "fraud"), "fraud")
     if args.dataset == 'all':
@@ -133,7 +135,8 @@ def main():
     results = {}
     for dataset in args.dataset.split(","):
         folder = os.path.join(args.root, dataset)
-        results.update({dataset: benchmark(args, folder, dataset)})
+        results.update({ 'timestamp_utc': ts,
+                         dataset: benchmark(args, folder, dataset)})
         print(json.dumps({dataset: results[dataset]}, indent=2, sort_keys=True))
     output = json.dumps(results, indent=2, sort_keys=True)
     output_file = open(args.output, "w")
