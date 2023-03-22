@@ -89,6 +89,8 @@ def parse_args():
                             "benchmarks on small amounts of data. WARNING: Some datasets will "
                             "give incorrect accuracy results if nrows is specified as they have "
                             "predefined train/test splits."))
+    parser.add_argument("-cycles", default=1, type=int,
+                        help=("#training of training cycles"))
     parser.add_argument("-warmup", action="store_true",
                         help=("Whether to run a small benchmark (fraud) as a warmup"))
     parser.add_argument("-verbose", action="store_true", help="Produce verbose output")
@@ -106,18 +108,18 @@ def benchmark(args, dataset_folder, dataset):
     results = {}
     # "all" runs all algorithms
     if args.algorithm == "all":
-        args.algorithm = "xgb-gpu,xgb-cpu,xgb-gpu-dask,lgbm-cpu,lgbm-gpu,cat-cpu,cat-gpu"
+        args.algorithm = "xgb-gpu,xgb-cpu,xgb-gpu-dask,lgbm-cpu,lgbm-gpu,cat-cpu,cat-gpu,skgb,skhgb,skrf,cumlrf"
     for alg in args.algorithm.split(","):
         print("Running '%s' ..." % alg)
         runner = algorithms.Algorithm.create(alg)
         with runner:
-            train_time = runner.fit(data, args)
-            pred = runner.test(data)
-            results[alg] = {
-                "train_time": train_time,
-                "accuracy": get_metrics(data, pred),
-            }
-
+            for i in range(args.cycles):
+                train_time = runner.fit(data, args)
+                pred = runner.test(data)
+                results[f"{alg}_{i+1}"] = {
+                    "train_time": train_time,
+                    "accuracy": get_metrics(data, pred),
+                }
     return results
 
 
@@ -144,3 +146,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
