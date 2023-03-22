@@ -295,7 +295,11 @@ def prepare_covtype(dataset_folder, nrows):  # pylint: disable=unused-argument
     if nrows is not None:
         X = X[0:nrows]
         y = y[0:nrows]
+    # Labele range in covtype start from 1, making it start from 0
+    y = y - 1
 
+    X = np.float32(X)
+    y = np.int32(y)
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=77,
                                                         test_size=0.2,
                                                         )
